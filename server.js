@@ -10,7 +10,7 @@ app.use(express.static('public'));
 app.get('/api/chamar-n8n', async (req, res) => {
   try {
     // Ajuste a URL do seu fluxo n8n (Webhook ou algo similar):
-    const n8nEndpoint = 'https://meu-n8n.onrender.com/webhook/ronda-jornalistica';
+    const n8nEndpoint = 'https://makeone.app.n8n.cloud/webhook/837b4994-f89a-4386-9a76-2f38f0742637';
 
     const response = await fetch(n8nEndpoint);
     if (!response.ok) {
