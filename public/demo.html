@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demonstração - RondaPress</title>
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <a class="logo" href="/">RondaPress</a>
+    <a class="btn-dark" href="/">Voltar</a>
+  </header>
+
+  <section class="center-container">
+    <div class="form-card">
+      <h2 class="form-title">Ronda Jornalística Automática</h2>
+      <p class="form-subtitle">
+        Clique para gerar sugestões de manchetes e receber artigos ordenados por relevância.
+      </p>
+
+      <button id="btnGerar" class="btn-dark" style="margin-bottom:1.5rem;">
+        Gerar Manchetes
+      </button>
+
+      <!-- Área para exibir o retorno do n8n -->
+      <pre id="resultado" style="font-size:0.95rem; white-space:pre-wrap;"></pre>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <p>© 2025 RondaPress</p>
+  </footer>
+
+  <script>
+    const btnGerar = document.getElementById('btnGerar');
+    const resultado = document.getElementById('resultado');
+
+    btnGerar.addEventListener('click', async () => {
+      resultado.textContent = 'Carregando... aguarde.';
+
+      try {
+        // Faz chamada GET ao endpoint local, que chamará o n8n
+        const res = await fetch('/api/chamar-n8n');
+        if (!res.ok) {
+          throw new Error('Falha ao chamar o workflow n8n.');
+        }
+        const data = await res.json();
+        
+        // Exibir “bruto” ou formatado
+        resultado.textContent = JSON.stringify(data, null, 2);
+
+        /*
+        // Se preferir formatar melhor, algo como:
+        const { manchetes, artigos } = data;
+        let textoFinal = 'Manchetes Sugeridas:\n';
+        manchetes.forEach((m, i) => {
+          textoFinal += `${i+1}. ${m}\n`;
+        });
+        textoFinal += '\nArtigos:\n';
+        artigos.forEach(art => {
+          textoFinal += `Título: ${art.titulo}\n`;
+          textoFinal += `Link:   ${art.link}\n`;
+          textoFinal += `Nota:   ${art.nota}\n`;
+          textoFinal += `Resumo: ${art.resumo}\n\n`;
+        });
+        resultado.textContent = textoFinal;
+        */
+      } catch (error) {
+        resultado.textContent = `Erro: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
+

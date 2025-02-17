@@ -1,0 +1,164 @@
+/* ==================
+   RESET BÁSICO
+================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Work Sans', sans-serif;
+  color: #1D1D1F;
+  background: #fff;
+  line-height: 1.6;
+}
+
+/* Centralização flex (opcional) */
+.center-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  padding: 2rem;
+}
+
+/* ==================
+   HEADER
+================== */
+.site-header {
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.site-header .logo {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: #1D1D1F;
+}
+
+/* ==================
+   LINKS & BOTÕES
+================== */
+a {
+  color: #1D1D1F;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+a:hover {
+  color: #666;
+}
+a:visited {
+  color: #1D1D1F;
+}
+
+.btn-dark {
+  display: inline-block;
+  background-color: #1D1D1F;
+  color: #fff !important;
+  padding: 0.75rem 1.5rem;
+  border-radius: 2rem;
+  text-decoration: none;
+  font-weight: 500;
+  text-align: center;
+  transition: background-color 0.3s ease;
+  border: 1px solid #1D1D1F;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.btn-dark:hover {
+  background-color: #333;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* ==================
+   HERO
+================== */
+.hero {
+  text-align: center;
+  padding: 5rem 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.hero-title {
+  font-size: 4rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.hero-description {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 2rem;
+  max-width: 700px;
+  line-height: 1.5;
+  margin: 0 auto 2rem;
+}
+
+/* ==================
+   SEÇÃO DE DESTAQUE
+================== */
+.highlight-section {
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+/* ==================
+   FORM CARD
+================== */
+.form-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 700px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.form-title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.form-subtitle {
+  text-align: center;
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}
+
+/* ==================
+   FOOTER
+================== */
+.site-footer {
+  text-align: center;
+  padding: 2rem;
+  border-top: 1px solid #eee;
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 2rem;
+}
+
