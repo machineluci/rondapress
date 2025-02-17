@@ -10,31 +10,31 @@
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    /* Ajuste rápido de espaçamento no “demo.html” */
+    /* Ajuste de espaçamento no “demo.html” */
     .headlines-title {
       text-align: left;
       margin-bottom: 0.5rem;
     }
     .headlines-list {
       text-align: left; 
-      margin: 0 0 1.5rem 1.5rem; /* diminui espaço final */
+      margin: 0 0 1.5rem 1.5rem; 
       line-height: 1.5;
     }
     .articles-title {
       text-align: left;
-      margin-bottom: 0.8rem; /* ajustei para ficar menor */
+      margin-bottom: 0.8rem; 
     }
     .article-container {
       text-align: left;
-      margin-bottom: 1rem;        /* reduzido de 2rem para 1rem */
-      padding-bottom: 0.8rem;     /* reduzido de 1rem para 0.8rem */
+      margin-bottom: 1rem;        
+      padding-bottom: 0.8rem;     
       border-bottom: 1px solid #ddd;
     }
     .article-container h4 {
-      margin-bottom: 0.2rem;      /* reduzido de 0.4rem para 0.2rem */
+      margin-bottom: 0.2rem;     
     }
     .article-container p {
-      margin: 0.15rem 0;          /* reduzido de 0.2rem para 0.15rem */
+      margin: 0.15rem 0;         
       line-height: 1.4;
     }
   </style>
@@ -56,7 +56,6 @@
         Gerar Manchetes
       </button>
 
-      <!-- Área para exibir o retorno do n8n -->
       <div id="resultado" style="font-size:0.95rem;"></div>
     </div>
   </section>
@@ -70,19 +69,16 @@
     const resultado = document.getElementById('resultado');
 
     btnGerar.addEventListener('click', async () => {
-      // Indicação de carregamento
       resultado.textContent = 'Carregando... aguarde.';
-
       try {
-        // Chama o endpoint local, que chama o n8n
+        // Chama o endpoint local, que chama o webhook do n8n
         const res = await fetch('/api/chamar-n8n');
         if (!res.ok) {
           throw new Error('Falha ao chamar o workflow n8n.');
         }
         const data = await res.json();
 
-        // Esperamos algo como:
-        // { "headlines": [...], "artigos": [...] }
+        // O Code node retorna { headlines: [...], artigos: [...] }
         if (!data.headlines && !data.artigos) {
           resultado.innerText = 'Nenhum dado encontrado.';
           return;
@@ -90,7 +86,7 @@
 
         let html = '';
 
-        // 1) Manchetes
+        // Manchetes
         if (Array.isArray(data.headlines) && data.headlines.length > 0) {
           html += `
             <h3 class="headlines-title">Sugestões de Manchetes para o Dia</h3>
@@ -102,7 +98,7 @@
           html += `</ul>`;
         }
 
-        // 2) Artigos (agora chamamos de “Últimas Notícias”)
+        // Artigos
         if (Array.isArray(data.artigos) && data.artigos.length > 0) {
           html += `<h3 class="articles-title">Últimas Notícias</h3>`;
           data.artigos.forEach(art => {
@@ -117,11 +113,9 @@
           });
         }
 
-        // Se não montamos nada...
         if (!html) {
           html = 'Nenhum dado relevante.';
         }
-
         resultado.innerHTML = html;
 
       } catch (error) {
