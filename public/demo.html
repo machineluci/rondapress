@@ -8,34 +8,34 @@
     href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+
   <style>
-    /* Ajuste rápido de espaçamento no “demo.html” 
-       (você pode migrar isto para styles.css se preferir) */
+    /* Ajuste rápido de espaçamento no “demo.html” */
     .headlines-title {
       text-align: left;
       margin-bottom: 0.5rem;
     }
     .headlines-list {
-      text-align: left;
-      margin: 0 0 2rem 1.5rem; /* aproxima os bullets da esquerda e dá espaço final */
+      text-align: left; 
+      margin: 0 0 1.5rem 1.5rem; /* diminui espaço final */
       line-height: 1.5;
     }
     .articles-title {
       text-align: left;
-      margin-bottom: 1rem;
+      margin-bottom: 0.8rem; /* ajustei para ficar menor */
     }
     .article-container {
       text-align: left;
-      margin-bottom: 2rem;
-      padding-bottom: 1rem;
+      margin-bottom: 1rem;        /* reduzido de 2rem para 1rem */
+      padding-bottom: 0.8rem;     /* reduzido de 1rem para 0.8rem */
       border-bottom: 1px solid #ddd;
     }
     .article-container h4 {
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.2rem;      /* reduzido de 0.4rem para 0.2rem */
     }
     .article-container p {
-      margin: 0.2rem 0;
-      line-height: 1.5;
+      margin: 0.15rem 0;          /* reduzido de 0.2rem para 0.15rem */
+      line-height: 1.4;
     }
   </style>
 </head>
@@ -82,7 +82,7 @@
         const data = await res.json();
 
         // Esperamos algo como:
-        // { "headlines": ["...","..."], "artigos": [{ "titulo":"...", "link":"...", "nota":"...", "resumo":"..." }, ...] }
+        // { "headlines": [...], "artigos": [...] }
         if (!data.headlines && !data.artigos) {
           resultado.innerText = 'Nenhum dado encontrado.';
           return;
@@ -102,9 +102,9 @@
           html += `</ul>`;
         }
 
-        // 2) Artigos
+        // 2) Artigos (agora chamamos de “Últimas Notícias”)
         if (Array.isArray(data.artigos) && data.artigos.length > 0) {
-          html += `<h3 class="articles-title">Artigos Ordenados</h3>`;
+          html += `<h3 class="articles-title">Últimas Notícias</h3>`;
           data.artigos.forEach(art => {
             html += `
               <div class="article-container">
