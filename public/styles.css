@@ -44,13 +44,13 @@ html, body {
   color: #1D1D1F;
 }
 
-/* 
+/*
    MEDIA QUERY p/ telas <= 600px
    Se quiser centralizar tudo no header quando pequeno
 */
 @media (max-width: 600px) {
   .site-header {
-    justify-content: center; /* centraliza logo */
+    justify-content: center; /* centraliza logo no mobile */
   }
 }
 
@@ -143,6 +143,9 @@ a:visited {
   max-width: 700px;
   padding: 2rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+
+  /* Alinha todo o conteúdo (inclusive o botão) ao centro */
+  text-align: center;
 }
 
 .form-title {

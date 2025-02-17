@@ -11,9 +11,9 @@
 </head>
 <body>
 
+  <!-- Header sem o botão "Voltar" -->
   <header class="site-header">
     <a class="logo" href="/">RondaPress</a>
-    <a class="btn-dark" href="/">Voltar</a>
   </header>
 
   <section class="center-container">
@@ -23,6 +23,7 @@
         Clique para gerar sugestões de manchetes e receber artigos ordenados por relevância.
       </p>
 
+      <!-- Botão que será centralizado pela regra CSS -->
       <button id="btnGerar" class="btn-dark" style="margin-bottom:1.5rem;">
         Gerar Manchetes
       </button>
@@ -54,22 +55,6 @@
         // Exibir “bruto” ou formatado
         resultado.textContent = JSON.stringify(data, null, 2);
 
-        /*
-        // Se preferir formatar melhor, algo como:
-        const { manchetes, artigos } = data;
-        let textoFinal = 'Manchetes Sugeridas:\n';
-        manchetes.forEach((m, i) => {
-          textoFinal += `${i+1}. ${m}\n`;
-        });
-        textoFinal += '\nArtigos:\n';
-        artigos.forEach(art => {
-          textoFinal += `Título: ${art.titulo}\n`;
-          textoFinal += `Link:   ${art.link}\n`;
-          textoFinal += `Nota:   ${art.nota}\n`;
-          textoFinal += `Resumo: ${art.resumo}\n\n`;
-        });
-        resultado.textContent = textoFinal;
-        */
       } catch (error) {
         resultado.textContent = `Erro: ${error.message}`;
       }
@@ -77,4 +62,3 @@
   </script>
 </body>
 </html>
-
