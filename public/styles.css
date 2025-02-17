@@ -15,7 +15,7 @@ html, body {
   line-height: 1.6;
 }
 
-/* Centralização flex (opcional) */
+/* Centralização flex (para páginas de formulário/demonstração) */
 .center-container {
   display: flex;
   flex-direction: column;
@@ -42,6 +42,16 @@ html, body {
   font-weight: 600;
   text-decoration: none;
   color: #1D1D1F;
+}
+
+/* 
+   MEDIA QUERY p/ telas <= 600px
+   Se quiser centralizar tudo no header quando pequeno
+*/
+@media (max-width: 600px) {
+  .site-header {
+    justify-content: center; /* centraliza logo */
+  }
 }
 
 /* ==================
@@ -161,4 +171,3 @@ a:visited {
   color: #666;
   margin-top: 2rem;
 }
-
