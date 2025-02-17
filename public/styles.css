@@ -7,22 +7,18 @@
   box-sizing: border-box;
 }
 
-/* Certifica de não ter barra horizontal no mobile */
 html, body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
   height: 100%;
   font-family: 'Work Sans', sans-serif;
   color: #1D1D1F;
   background: #fff;
   line-height: 1.6;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden; /* evita barra de rolagem horizontal no mobile */
 }
 
-/* ==================
-   CONTAINER CENTRALIZADO
-   (usado em páginas de formulário/demonstração)
-================== */
+/* Centralização flex (para páginas de formulário/demonstração) */
 .center-container {
   display: flex;
   flex-direction: column;
@@ -37,12 +33,11 @@ html, body {
    HEADER (logo sempre centralizado)
 ================== */
 .site-header {
-  /* Removemos “space-between” e forçamos centralização total */
   padding: 1rem;
   border-bottom: 1px solid #eee;
   display: flex;
   align-items: center;
-  justify-content: center; 
+  justify-content: center; /* centraliza logo */
 }
 
 .site-header .logo {
@@ -85,6 +80,7 @@ a:visited {
 .btn-dark:hover {
   background-color: #333;
 }
+
 .btn-block {
   width: 100%;
 }
@@ -94,8 +90,7 @@ a:visited {
 ================== */
 .hero {
   text-align: center;
-  /* Ajuste de padding menor pra telas pequenas */
-  padding: 4rem 1rem;
+  padding: 5rem 1rem;
   max-width: 900px;
   margin: 0 auto;
 }
@@ -121,7 +116,6 @@ a:visited {
   margin: 0 auto 2rem;
 }
 
-/* Para telas bem pequenas, reduzimos o tamanho do título */
 @media (max-width: 480px) {
   .hero-title {
     font-size: 2.4rem;
@@ -135,7 +129,7 @@ a:visited {
    SEÇÃO DE DESTAQUE
 ================== */
 .highlight-section {
-  padding: 3rem 1rem;
+  padding: 4rem 1rem;
   text-align: center;
 }
 
@@ -150,7 +144,7 @@ a:visited {
   max-width: 700px;
   padding: 2rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  text-align: center; /* Centraliza conteúdo */
+  text-align: center;
 }
 
 .form-title {

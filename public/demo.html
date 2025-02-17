@@ -11,7 +11,6 @@
 </head>
 <body>
 
-  <!-- Header sem o botão "Voltar" -->
   <header class="site-header">
     <a class="logo" href="/">RondaPress</a>
   </header>
@@ -23,13 +22,12 @@
         Clique para gerar sugestões de manchetes e receber artigos ordenados por relevância.
       </p>
 
-      <!-- Botão que será centralizado pela regra CSS -->
       <button id="btnGerar" class="btn-dark" style="margin-bottom:1.5rem;">
         Gerar Manchetes
       </button>
 
       <!-- Área para exibir o retorno do n8n -->
-      <pre id="resultado" style="font-size:0.95rem; white-space:pre-wrap;"></pre>
+      <div id="resultado" style="font-size:0.95rem; white-space:pre-wrap;"></div>
     </div>
   </section>
 
@@ -45,15 +43,34 @@
       resultado.textContent = 'Carregando... aguarde.';
 
       try {
-        // Faz chamada GET ao endpoint local, que chamará o n8n
+        // Faz chamada GET ao endpoint local, que chamará o Webhook n8n
         const res = await fetch('/api/chamar-n8n');
         if (!res.ok) {
           throw new Error('Falha ao chamar o workflow n8n.');
         }
         const data = await res.json();
-        
-        // Exibir “bruto” ou formatado
-        resultado.textContent = JSON.stringify(data, null, 2);
+
+        // Se o n8n retorna { "manchetes": [ {...}, {...} ] }, processamos assim:
+        if (!Array.isArray(data.manchetes)) {
+          resultado.innerText = 'Nenhum dado encontrado.';
+          return;
+        }
+
+        // Montar HTML com negritos e links
+        let html = '';
+        data.manchetes.forEach((artigo) => {
+          html += `
+            <div style="margin-bottom: 1rem;">
+              <p><strong>Título:</strong> ${artigo.titulo}</p>
+              <p><strong>Link:</strong> <a href="${artigo.link}" target="_blank">${artigo.link}</a></p>
+              <p><strong>Nota:</strong> ${artigo.nota}</p>
+              <p><strong>Resumo:</strong> ${artigo.resumo}</p>
+            </div>
+            <hr/>
+          `;
+        });
+
+        resultado.innerHTML = html;
 
       } catch (error) {
         resultado.textContent = `Erro: ${error.message}`;

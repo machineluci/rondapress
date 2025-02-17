@@ -1,24 +1,26 @@
+// server.js
 const express = require('express');
-const fetch = require('node-fetch'); // Se Node < 18
+const fetch = require('node-fetch'); // Se estiver usando Node < 18
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Servir arquivos estáticos
+// Servir arquivos estáticos da pasta "public"
 app.use(express.static('public'));
 
-// Endpoint para disparar seu workflow n8n
+// Endpoint que chama o webhook do n8n
 app.get('/api/chamar-n8n', async (req, res) => {
   try {
-    // Ajuste a URL do seu fluxo n8n (Webhook ou algo similar):
+    // Substitua essa URL pela Production URL do seu node Webhook no n8n
     const n8nEndpoint = 'https://makeone.app.n8n.cloud/webhook/837b4994-f89a-4386-9a76-2f38f0742637';
 
     const response = await fetch(n8nEndpoint);
     if (!response.ok) {
-      throw new Error(`Erro ao chamar n8n: ${response.statusText}`);
+      throw new Error(`Falha ao chamar n8n: ${response.statusText}`);
     }
 
-    // Supondo que n8n retorne JSON
+    // Ler o JSON retornado pelo n8n
     const data = await response.json();
+    // Enviar esse JSON ao front-end
     res.json(data);
 
   } catch (err) {
@@ -27,7 +29,7 @@ app.get('/api/chamar-n8n', async (req, res) => {
   }
 });
 
+// Iniciar o servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}...`);
 });
-
