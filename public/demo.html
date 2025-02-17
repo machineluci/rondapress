@@ -8,6 +8,36 @@
     href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Ajuste rápido de espaçamento no “demo.html” 
+       (você pode migrar isto para styles.css se preferir) */
+    .headlines-title {
+      text-align: left;
+      margin-bottom: 0.5rem;
+    }
+    .headlines-list {
+      text-align: left;
+      margin: 0 0 2rem 1.5rem; /* aproxima os bullets da esquerda e dá espaço final */
+      line-height: 1.5;
+    }
+    .articles-title {
+      text-align: left;
+      margin-bottom: 1rem;
+    }
+    .article-container {
+      text-align: left;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #ddd;
+    }
+    .article-container h4 {
+      margin-bottom: 0.4rem;
+    }
+    .article-container p {
+      margin: 0.2rem 0;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 <body>
 
@@ -27,7 +57,7 @@
       </button>
 
       <!-- Área para exibir o retorno do n8n -->
-      <div id="resultado" style="font-size:0.95rem; white-space:pre-wrap;"></div>
+      <div id="resultado" style="font-size:0.95rem;"></div>
     </div>
   </section>
 
@@ -51,8 +81,8 @@
         }
         const data = await res.json();
 
-        // Esperamos algo como: { headlines: [...], artigos: [...] }
-        // Se não vier nesse formato, exibimos mensagem
+        // Esperamos algo como:
+        // { "headlines": ["...","..."], "artigos": [{ "titulo":"...", "link":"...", "nota":"...", "resumo":"..." }, ...] }
         if (!data.headlines && !data.artigos) {
           resultado.innerText = 'Nenhum dado encontrado.';
           return;
@@ -60,35 +90,34 @@
 
         let html = '';
 
-        // 1) Se temos headlines, exibimos em lista
+        // 1) Manchetes
         if (Array.isArray(data.headlines) && data.headlines.length > 0) {
           html += `
-            <h3 style="text-align:left;">Sugestões de Manchetes para o Dia</h3>
-            <ul style="text-align:left; margin-bottom:1.5rem;">
+            <h3 class="headlines-title">Sugestões de Manchetes para o Dia</h3>
+            <ul class="headlines-list">
           `;
-          data.headlines.forEach((manchete) => {
+          data.headlines.forEach(manchete => {
             html += `<li>${manchete}</li>`;
           });
           html += `</ul>`;
         }
 
-        // 2) Se temos artigos, exibimos cada um
+        // 2) Artigos
         if (Array.isArray(data.artigos) && data.artigos.length > 0) {
-          html += `<h3 style="text-align:left;">Artigos Ordenados</h3>`;
-          data.artigos.forEach((art) => {
+          html += `<h3 class="articles-title">Artigos Ordenados</h3>`;
+          data.artigos.forEach(art => {
             html += `
-              <div style="text-align:left; margin-bottom:1rem;">
-                <p><strong>Título:</strong> ${art.titulo || ''}</p>
+              <div class="article-container">
+                <h4>Título: ${art.titulo || ''}</h4>
                 <p><strong>Link:</strong> <a href="${art.link || '#'}" target="_blank">${art.link || ''}</a></p>
                 <p><strong>Nota:</strong> ${art.nota || ''}</p>
                 <p><strong>Resumo:</strong> ${art.resumo || ''}</p>
               </div>
-              <hr/>
             `;
           });
         }
 
-        // Se ao final não montamos nada, avisamos
+        // Se não montamos nada...
         if (!html) {
           html = 'Nenhum dado relevante.';
         }
