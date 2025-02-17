@@ -27,14 +27,14 @@ html, body {
 }
 
 /* ==================
-   HEADER
+   HEADER (logo sempre centralizado)
 ================== */
 .site-header {
   padding: 1rem 2rem;
   border-bottom: 1px solid #eee;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center; /* Sempre centralizado */
 }
 
 .site-header .logo {
@@ -42,16 +42,6 @@ html, body {
   font-weight: 600;
   text-decoration: none;
   color: #1D1D1F;
-}
-
-/*
-   MEDIA QUERY p/ telas <= 600px
-   Se quiser centralizar tudo no header quando pequeno
-*/
-@media (max-width: 600px) {
-  .site-header {
-    justify-content: center; /* centraliza logo no mobile */
-  }
 }
 
 /* ==================
@@ -143,24 +133,21 @@ a:visited {
   max-width: 700px;
   padding: 2rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-
-  /* Alinha todo o conteúdo (inclusive o botão) ao centro */
-  text-align: center;
+  text-align: center; /* Centraliza o conteúdo interno (botões, textos) */
 }
 
 .form-title {
-  text-align: center;
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 1rem;
 }
 
 .form-subtitle {
-  text-align: center;
   font-size: 1rem;
   color: #666;
   margin-bottom: 1.5rem;
   line-height: 1.4;
+  text-align: center;
 }
 
 /* ==================
