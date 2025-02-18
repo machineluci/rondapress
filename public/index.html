@@ -11,39 +11,80 @@
     href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* 
+       Limita a largura e centraliza o conteúdo.
+       Ajuste max-width conforme desejar (ex.: 700px, 800px etc.)
+    */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;   /* centraliza horizontalmente */
+      padding: 0 1rem; /* espaço lateral p/ mobile não encostar no canto */
+    }
+
+    /* Ajustes na .hero, removendo o max-width e delegando ao .container */
+    .hero .container {
+      text-align: center;
+      padding: 5rem 1rem; 
+    }
+    .hero-title {
+      margin-bottom: 1rem;
+    }
+    .hero-subtitle {
+      margin-bottom: 2rem;
+      color: #333;
+    }
+    .hero-description {
+      margin: 0 auto 2rem;
+      max-width: 700px;
+      line-height: 1.5;
+      color: #555;
+    }
+
+    /* Ajustes na highlight-section */
+    .highlight-section .container {
+      padding: 4rem 1rem;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
 
   <!-- Header -->
   <header class="site-header">
-    <!-- Mantemos só o logo -->
     <a class="logo" href="/">RondaPress</a>
   </header>
 
   <!-- Hero -->
   <section class="hero">
-    <h1 class="hero-title">RondaPress</h1>
-    <p class="hero-subtitle">Automatize a busca e classificação de notícias do dia.</p>
-    <p class="hero-description">
-      RondaPress processa as manchetes mais relevantes e auxilia sua redação a ganhar tempo
-      com curadoria de notícias de alta qualidade.
-    </p>
-    <!-- Link para a página de demonstração -->
-    <a href="demo.html" class="btn-dark">Ver Demonstração</a>
+    <!-- Container para limitar a largura -->
+    <div class="container">
+      <h1 class="hero-title">RondaPress</h1>
+      <p class="hero-subtitle">Automatize a busca e classificação de notícias do dia.</p>
+      <p class="hero-description">
+        RondaPress processa as manchetes mais relevantes e auxilia sua redação a ganhar tempo
+        com curadoria de notícias de alta qualidade.
+      </p>
+      <a href="demo.html" class="btn-dark">Ver Demonstração</a>
+    </div>
   </section>
 
   <!-- Seção de Destaque (opcional) -->
   <section class="highlight-section">
-    <h2>Por que RondaPress?</h2>
-    <p>
-      RondaPress é a inteligência que organiza notícias, mantendo o olhar único do jornalista.
-      Oferecemos uma abordagem inteligente para organizar e apresentar os fatos mais importantes do dia,
-      sem substituir a visão do profissional de jornalismo, garantindo agilidade e precisão para a sua pauta. 
-    </p>
+    <div class="container">
+      <h2>Por que RondaPress?</h2>
+      <p>
+        RondaPress é a inteligência que organiza notícias, mantendo o olhar único do jornalista.
+        Oferecemos uma abordagem inteligente para organizar e apresentar os fatos mais importantes do dia,
+        sem substituir a visão do profissional de jornalismo, garantindo agilidade e precisão para a sua pauta.
+      </p>
+    </div>
   </section>
 
   <footer class="site-footer">
     <p>© 2025 RondaPress — Todos os direitos reservados.</p>
   </footer>
+
 </body>
 </html>
