@@ -19,14 +19,15 @@
     */
     .container {
       max-width: 900px;
-      margin: 0 auto;   /* centraliza horizontalmente */
-      padding: 0 1rem; /* espaço lateral p/ mobile não encostar no canto */
+      margin: 0 auto;  /* centraliza horizontalmente */
+      padding: 0 1rem; /* espaço lateral p/ mobile */
     }
 
-    /* Ajustes na .hero, removendo o max-width e delegando ao .container */
+    /* Ajuste de espaçamento na hero */
     .hero .container {
       text-align: center;
-      padding: 5rem 1rem; 
+      /* Reduzimos de 5rem p/ 3.5rem */
+      padding: 3.5rem 1rem; 
     }
     .hero-title {
       margin-bottom: 1rem;
@@ -42,9 +43,10 @@
       color: #555;
     }
 
-    /* Ajustes na highlight-section */
+    /* Ajuste de espaçamento na highlight-section */
     .highlight-section .container {
-      padding: 4rem 1rem;
+      /* Reduzimos de 4rem p/ 2.5rem */
+      padding: 2.5rem 1rem;
       text-align: center;
     }
   </style>
@@ -58,7 +60,6 @@
 
   <!-- Hero -->
   <section class="hero">
-    <!-- Container para limitar a largura -->
     <div class="container">
       <h1 class="hero-title">RondaPress</h1>
       <p class="hero-subtitle">Automatize a busca e classificação de notícias do dia.</p>
@@ -70,7 +71,7 @@
     </div>
   </section>
 
-  <!-- Seção de Destaque (opcional) -->
+  <!-- Seção de Destaque -->
   <section class="highlight-section">
     <div class="container">
       <h2>Por que RondaPress?</h2>
