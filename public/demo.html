@@ -8,9 +8,13 @@
     href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-
   <style>
-    /* Ajuste de espaçamento no “demo.html” */
+    /* ==================
+       Ajustes no “demo.html”
+       - Espaçamento e
+       - Quebra de URL longa
+    =================== */
+
     .headlines-title {
       text-align: left;
       margin-bottom: 0.5rem;
@@ -31,11 +35,20 @@
       border-bottom: 1px solid #ddd;
     }
     .article-container h4 {
-      margin-bottom: 0.2rem;     
+      margin-bottom: 0.2rem;
     }
     .article-container p {
       margin: 0.15rem 0;         
       line-height: 1.4;
+    }
+    /* Força quebra de linha no meio de URLs extensas */
+    .article-container a {
+      word-wrap: break-word;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      white-space: normal;
+      display: inline-block;
+      max-width: 100%;
     }
   </style>
 </head>
@@ -56,6 +69,7 @@
         Gerar Manchetes
       </button>
 
+      <!-- Área para exibir o retorno do n8n -->
       <div id="resultado" style="font-size:0.95rem;"></div>
     </div>
   </section>
@@ -71,14 +85,14 @@
     btnGerar.addEventListener('click', async () => {
       resultado.textContent = 'Carregando... aguarde.';
       try {
-        // Chama o endpoint local, que chama o webhook do n8n
+        // Chama o endpoint local, que chama o n8n
         const res = await fetch('/api/chamar-n8n');
         if (!res.ok) {
           throw new Error('Falha ao chamar o workflow n8n.');
         }
         const data = await res.json();
 
-        // O Code node retorna { headlines: [...], artigos: [...] }
+        // Esperamos algo como { headlines: [...], artigos: [...] }
         if (!data.headlines && !data.artigos) {
           resultado.innerText = 'Nenhum dado encontrado.';
           return;
@@ -105,7 +119,9 @@
             html += `
               <div class="article-container">
                 <h4>Título: ${art.titulo || ''}</h4>
-                <p><strong>Link:</strong> <a href="${art.link || '#'}" target="_blank">${art.link || ''}</a></p>
+                <p><strong>Link:</strong> 
+                  <a href="${art.link || '#'}" target="_blank">${art.link || ''}</a>
+                </p>
                 <p><strong>Nota:</strong> ${art.nota || ''}</p>
                 <p><strong>Resumo:</strong> ${art.resumo || ''}</p>
               </div>
