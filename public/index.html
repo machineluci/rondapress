@@ -13,43 +13,53 @@
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    /*
-      Centraliza conteúdo e limita a largura
-    */
+    /* Container centralizado e largura máxima */
     .container {
       max-width: 900px;
-      margin: 0 auto;  /* centraliza horizontalmente */
-      padding: 0 1rem; /* espaço lateral para mobile */
+      margin: 0 auto;
+      padding: 0 1rem;
     }
 
-    /*
-      HERO com menor espaçamento vertical
-    */
+    /* Hero com menos padding e fontes um pouco menores */
     .hero .container {
       text-align: center;
-      /* BEM menor do que antes */
-      padding: 2rem 1rem; 
+      padding: 1.5rem 1rem; /* BEM menor que antes */
     }
     .hero-title {
       margin-bottom: 0.75rem;
+      font-size: 3rem; /* Reduzir caso queira menos scroll (padrão era ~4rem) */
     }
     .hero-subtitle {
-      margin-bottom: 1.5rem; 
+      margin-bottom: 1rem;
       color: #333;
+      font-size: 1.125rem; /* ligeiramente menor que 1.25rem */
     }
     .hero-description {
-      margin: 0 auto 1.5rem; 
+      margin: 0 auto 1rem;
       max-width: 700px;
       line-height: 1.5;
       color: #555;
+      font-size: 0.95rem; /* reduzir fonte para ocupar menos espaço */
+    }
+    .btn-dark {
+      margin-bottom: 0.75rem; /* menos espaço depois do botão */
     }
 
-    /*
-      Seção "Por que RondaPress?" com padding reduzido
-    */
+    /* Seção “Por que RondaPress?” com padding menor */
     .highlight-section .container {
-      padding: 1.5rem 1rem; 
+      padding: 1rem 1rem; /* reduzimos de 4rem, etc. para 1rem */
       text-align: center;
+    }
+    .highlight-section h2 {
+      margin-bottom: 0.5rem; /* menos espaço acima do texto */
+      font-size: 1.25rem;
+    }
+    .highlight-section p {
+      margin: 0 auto;
+      line-height: 1.4;
+      max-width: 700px;
+      font-size: 0.95rem;
+      color: #555;
     }
   </style>
 </head>
