@@ -13,40 +13,42 @@
   <link rel="stylesheet" href="styles.css">
 
   <style>
-    /* 
-       Limita a largura e centraliza o conteúdo.
-       Ajuste max-width conforme desejar (ex.: 700px, 800px etc.)
+    /*
+      Centraliza conteúdo e limita a largura
     */
     .container {
       max-width: 900px;
       margin: 0 auto;  /* centraliza horizontalmente */
-      padding: 0 1rem; /* espaço lateral p/ mobile */
+      padding: 0 1rem; /* espaço lateral para mobile */
     }
 
-    /* Ajuste de espaçamento na hero */
+    /*
+      HERO com menor espaçamento vertical
+    */
     .hero .container {
       text-align: center;
-      /* Reduzimos de 5rem p/ 3.5rem */
-      padding: 3.5rem 1rem; 
+      /* BEM menor do que antes */
+      padding: 2rem 1rem; 
     }
     .hero-title {
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
     }
     .hero-subtitle {
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem; 
       color: #333;
     }
     .hero-description {
-      margin: 0 auto 2rem;
+      margin: 0 auto 1.5rem; 
       max-width: 700px;
       line-height: 1.5;
       color: #555;
     }
 
-    /* Ajuste de espaçamento na highlight-section */
+    /*
+      Seção "Por que RondaPress?" com padding reduzido
+    */
     .highlight-section .container {
-      /* Reduzimos de 4rem p/ 2.5rem */
-      padding: 2.5rem 1rem;
+      padding: 1.5rem 1rem; 
       text-align: center;
     }
   </style>
