@@ -8,12 +8,54 @@
     href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ==================
+       Ajustes no “demo.html”
+       - Espaçamento e
+       - Quebra de URL longa
+    =================== */
+
+    .headlines-title {
+      text-align: left;
+      margin-bottom: 0.5rem;
+    }
+    .headlines-list {
+      text-align: left; 
+      margin: 0 0 1.5rem 1.5rem; 
+      line-height: 1.5;
+    }
+    .articles-title {
+      text-align: left;
+      margin-bottom: 0.8rem; 
+    }
+    .article-container {
+      text-align: left;
+      margin-bottom: 1rem;        
+      padding-bottom: 0.8rem;     
+      border-bottom: 1px solid #ddd;
+    }
+    .article-container h4 {
+      margin-bottom: 0.2rem;
+    }
+    .article-container p {
+      margin: 0.15rem 0;         
+      line-height: 1.4;
+    }
+    /* Força quebra de linha no meio de URLs extensas */
+    .article-container a {
+      word-wrap: break-word;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      white-space: normal;
+      display: inline-block;
+      max-width: 100%;
+    }
+  </style>
 </head>
 <body>
 
   <header class="site-header">
     <a class="logo" href="/">RondaPress</a>
-    <a class="btn-dark" href="/">Voltar</a>
   </header>
 
   <section class="center-container">
@@ -28,12 +70,12 @@
       </button>
 
       <!-- Área para exibir o retorno do n8n -->
-      <pre id="resultado" style="font-size:0.95rem; white-space:pre-wrap;"></pre>
+      <div id="resultado" style="font-size:0.95rem;"></div>
     </div>
   </section>
 
   <footer class="site-footer">
-    <p>© 2025 RondaPress</p>
+    <p>© 2025 RondaPress — Todos os direitos reservados.</p>
   </footer>
 
   <script>
@@ -42,34 +84,56 @@
 
     btnGerar.addEventListener('click', async () => {
       resultado.textContent = 'Carregando... aguarde.';
-
       try {
-        // Faz chamada GET ao endpoint local, que chamará o n8n
+        // Chama o endpoint local, que chama o n8n
         const res = await fetch('/api/chamar-n8n');
         if (!res.ok) {
           throw new Error('Falha ao chamar o workflow n8n.');
         }
         const data = await res.json();
-        
-        // Exibir “bruto” ou formatado
-        resultado.textContent = JSON.stringify(data, null, 2);
 
-        /*
-        // Se preferir formatar melhor, algo como:
-        const { manchetes, artigos } = data;
-        let textoFinal = 'Manchetes Sugeridas:\n';
-        manchetes.forEach((m, i) => {
-          textoFinal += `${i+1}. ${m}\n`;
-        });
-        textoFinal += '\nArtigos:\n';
-        artigos.forEach(art => {
-          textoFinal += `Título: ${art.titulo}\n`;
-          textoFinal += `Link:   ${art.link}\n`;
-          textoFinal += `Nota:   ${art.nota}\n`;
-          textoFinal += `Resumo: ${art.resumo}\n\n`;
-        });
-        resultado.textContent = textoFinal;
-        */
+        // Esperamos algo como { headlines: [...], artigos: [...] }
+        if (!data.headlines && !data.artigos) {
+          resultado.innerText = 'Nenhum dado encontrado.';
+          return;
+        }
+
+        let html = '';
+
+        // Manchetes
+        if (Array.isArray(data.headlines) && data.headlines.length > 0) {
+          html += `
+            <h3 class="headlines-title">Sugestões de Manchetes para o Dia</h3>
+            <ul class="headlines-list">
+          `;
+          data.headlines.forEach(manchete => {
+            html += `<li>${manchete}</li>`;
+          });
+          html += `</ul>`;
+        }
+
+        // Artigos
+        if (Array.isArray(data.artigos) && data.artigos.length > 0) {
+          html += `<h3 class="articles-title">Últimas Notícias</h3>`;
+          data.artigos.forEach(art => {
+            html += `
+              <div class="article-container">
+                <h4>Título: ${art.titulo || ''}</h4>
+                <p><strong>Link:</strong> 
+                  <a href="${art.link || '#'}" target="_blank">${art.link || ''}</a>
+                </p>
+                <p><strong>Nota:</strong> ${art.nota || ''}</p>
+                <p><strong>Resumo:</strong> ${art.resumo || ''}</p>
+              </div>
+            `;
+          });
+        }
+
+        if (!html) {
+          html = 'Nenhum dado relevante.';
+        }
+        resultado.innerHTML = html;
+
       } catch (error) {
         resultado.textContent = `Erro: ${error.message}`;
       }
@@ -77,4 +141,3 @@
   </script>
 </body>
 </html>
-
