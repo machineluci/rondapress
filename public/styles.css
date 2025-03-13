@@ -13,9 +13,12 @@ html, body {
   color: #1D1D1F;
   background: #fff;
   line-height: 1.6;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden; /* evita barra de rolagem horizontal no mobile */
 }
 
-/* Centralização flex (opcional) */
+/* Centralização flex (para páginas de formulário/demonstração) */
 .center-container {
   display: flex;
   flex-direction: column;
@@ -27,14 +30,14 @@ html, body {
 }
 
 /* ==================
-   HEADER
+   HEADER (logo sempre centralizado)
 ================== */
 .site-header {
-  padding: 1rem 2rem;
+  padding: 1rem;
   border-bottom: 1px solid #eee;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center; /* centraliza logo */
 }
 
 .site-header .logo {
@@ -65,16 +68,15 @@ a:visited {
   color: #fff !important;
   padding: 0.75rem 1.5rem;
   border-radius: 2rem;
-  text-decoration: none;
-  font-weight: 500;
   text-align: center;
-  transition: background-color 0.3s ease;
   border: 1px solid #1D1D1F;
-  cursor: pointer;
+  font-weight: 500;
   font-size: 1rem;
   line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
 }
-
 .btn-dark:hover {
   background-color: #333;
 }
@@ -84,17 +86,17 @@ a:visited {
 }
 
 /* ==================
-   HERO
+   HERO SECTION
 ================== */
 .hero {
   text-align: center;
-  padding: 5rem 2rem;
+  padding: 5rem 1rem;
   max-width: 900px;
   margin: 0 auto;
 }
 
 .hero-title {
-  font-size: 4rem;
+  font-size: 3.5rem;
   font-weight: 600;
   margin-bottom: 1rem;
 }
@@ -114,11 +116,20 @@ a:visited {
   margin: 0 auto 2rem;
 }
 
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 2.4rem;
+  }
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+}
+
 /* ==================
    SEÇÃO DE DESTAQUE
 ================== */
 .highlight-section {
-  padding: 4rem 2rem;
+  padding: 4rem 1rem;
   text-align: center;
 }
 
@@ -133,17 +144,16 @@ a:visited {
   max-width: 700px;
   padding: 2rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  text-align: center;
 }
 
 .form-title {
-  text-align: center;
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 1rem;
 }
 
 .form-subtitle {
-  text-align: center;
   font-size: 1rem;
   color: #666;
   margin-bottom: 1.5rem;
@@ -155,10 +165,9 @@ a:visited {
 ================== */
 .site-footer {
   text-align: center;
-  padding: 2rem;
+  padding: 2rem 1rem;
   border-top: 1px solid #eee;
   font-size: 0.875rem;
   color: #666;
   margin-top: 2rem;
 }
-
