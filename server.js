@@ -9,22 +9,22 @@ app.use(express.static('public'));
 // Rota que seu front-end chama ao clicar "Gerar Manchetes"
 app.get('/api/chamar-n8n', async (req, res) => {
   try {
-    // Substitua AQUI pela Production Webhook URL do seu fluxo n8n:
+    // Substitua aqui pela Production Webhook URL do seu fluxo n8n (método GET)
     const n8nEndpoint = 'https://makeone.app.n8n.cloud/webhook/837b4994-f89a-4386-9a76-2f38f0742637';
 
-    // Faz a requisição ao endpoint do n8n
-    const response = await fetch(n8nEndpoint);
+    // Faz a requisição GET ao endpoint do n8n
+    const response = await fetch(n8nEndpoint, { method: 'GET' });
     if (!response.ok) {
       throw new Error(`Erro ao chamar n8n: ${response.statusText}`);
     }
 
     // Supondo que o n8n retorne JSON
     const data = await response.json();
-    // Retornamos o JSON ao front-end
+    // Enviamos esse JSON de volta ao front-end
     res.json(data);
 
   } catch (err) {
-    console.error(err);
+    console.error('Erro ao chamar n8n:', err);
     res.status(500).json({ error: 'Ocorreu um erro ao chamar n8n.' });
   }
 });
