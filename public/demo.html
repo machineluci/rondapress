@@ -1,143 +1,71 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Demonstração - RondaPress</title>
-  <link 
-    href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap"
-    rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <style>
-    /* ==================
-       Ajustes no “demo.html”
-       - Espaçamento e
-       - Quebra de URL longa
-    =================== */
+const express = require('express');
+const fetch = require('node-fetch'); // para Node < 18
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-    .headlines-title {
-      text-align: left;
-      margin-bottom: 0.5rem;
+// 1) Servir arquivos estáticos da pasta "public"
+app.use(express.static('public'));
+
+/**
+ *  2) /api/start-n8n
+ *     - Chama o webhook "Start Job" no n8n (que usa "Respond to Webhook" para retornar { jobId, ... } imediatamente).
+ *     - Devolve esse JSON ao front-end.
+ */
+app.get('/api/start-n8n', async (req, res) => {
+  try {
+    // URL de produção do seu Start Job Webhook (GET)
+    const startEndpoint = 'https://makeone.app.n8n.cloud/webhook/webhook/start-job';
+
+    // Faz a chamada ao n8n
+    const response = await fetch(startEndpoint, { method: 'GET' });
+    if (!response.ok) {
+      throw new Error(`Erro ao iniciar job no n8n: ${response.statusText}`);
     }
-    .headlines-list {
-      text-align: left; 
-      margin: 0 0 1.5rem 1.5rem; 
-      line-height: 1.5;
+
+    // Esperamos algo como { jobId: "...", userFacingMessage: "..." }
+    const data = await response.json();
+    // repassamos ao front-end
+    res.json(data);
+
+  } catch (err) {
+    console.error('Erro ao iniciar job no n8n:', err);
+    res.status(500).json({ error: 'Ocorreu um erro ao iniciar o job no n8n.' });
+  }
+});
+
+/**
+ *  3) /api/status-n8n?jobId=XYZ
+ *     - O front-end fará polling a cada X segundos para ver se o job terminou.
+ *     - Chamamos o webhook de "Check Status" no n8n com o mesmo jobId.
+ *       Se pronto, retorna { done: true, headlines: [...], artigos: [...] }.
+ *       Se ainda em processamento, retorna { done: false }.
+ */
+app.get('/api/status-n8n', async (req, res) => {
+  try {
+    const { jobId } = req.query;
+    if (!jobId) {
+      return res.status(400).json({ error: 'Faltou jobId.' });
     }
-    .articles-title {
-      text-align: left;
-      margin-bottom: 0.8rem; 
+
+    // URL de produção do Check Status Webhook (GET)
+    const statusEndpoint = `https://makeone.app.n8n.cloud/webhook/webhook/check-status?jobId=${jobId}`;
+
+    const response = await fetch(statusEndpoint, { method: 'GET' });
+    if (!response.ok) {
+      throw new Error(`Erro ao checar status no n8n: ${response.statusText}`);
     }
-    .article-container {
-      text-align: left;
-      margin-bottom: 1rem;        
-      padding-bottom: 0.8rem;     
-      border-bottom: 1px solid #ddd;
-    }
-    .article-container h4 {
-      margin-bottom: 0.2rem;
-    }
-    .article-container p {
-      margin: 0.15rem 0;         
-      line-height: 1.4;
-    }
-    /* Força quebra de linha no meio de URLs extensas */
-    .article-container a {
-      word-wrap: break-word;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-      white-space: normal;
-      display: inline-block;
-      max-width: 100%;
-    }
-  </style>
-</head>
-<body>
 
-  <header class="site-header">
-    <a class="logo" href="/">RondaPress</a>
-  </header>
+    // Esperamos { done: false } ou { done: true, headlines: [...], artigos: [...] }
+    const data = await response.json();
+    res.json(data);
 
-  <section class="center-container">
-    <div class="form-card">
-      <h2 class="form-title">Ronda Jornalística Automática</h2>
-      <p class="form-subtitle">
-        Clique para gerar sugestões de manchetes e receber artigos ordenados por relevância.
-      </p>
+  } catch (err) {
+    console.error('Erro ao checar status n8n:', err);
+    res.status(500).json({ error: 'Ocorreu um erro ao checar status no n8n.' });
+  }
+});
 
-      <button id="btnGerar" class="btn-dark" style="margin-bottom:1.5rem;">
-        Gerar Manchetes
-      </button>
-
-      <!-- Área para exibir o retorno do n8n -->
-      <div id="resultado" style="font-size:0.95rem;"></div>
-    </div>
-  </section>
-
-  <footer class="site-footer">
-    <p>© 2025 RondaPress — Todos os direitos reservados.</p>
-  </footer>
-
-  <script>
-    const btnGerar = document.getElementById('btnGerar');
-    const resultado = document.getElementById('resultado');
-
-    btnGerar.addEventListener('click', async () => {
-      resultado.textContent = 'Carregando... aguarde.';
-      try {
-        // Chama o endpoint local, que chama o n8n
-        const res = await fetch('/api/chamar-n8n');
-        if (!res.ok) {
-          throw new Error('Falha ao chamar o workflow n8n.');
-        }
-        const data = await res.json();
-
-        // Esperamos algo como { headlines: [...], artigos: [...] }
-        if (!data.headlines && !data.artigos) {
-          resultado.innerText = 'Nenhum dado encontrado.';
-          return;
-        }
-
-        let html = '';
-
-        // Manchetes
-        if (Array.isArray(data.headlines) && data.headlines.length > 0) {
-          html += `
-            <h3 class="headlines-title">Sugestões de Manchetes para o Dia</h3>
-            <ul class="headlines-list">
-          `;
-          data.headlines.forEach(manchete => {
-            html += `<li>${manchete}</li>`;
-          });
-          html += `</ul>`;
-        }
-
-        // Artigos
-        if (Array.isArray(data.artigos) && data.artigos.length > 0) {
-          html += `<h3 class="articles-title">Últimas Notícias</h3>`;
-          data.artigos.forEach(art => {
-            html += `
-              <div class="article-container">
-                <h4>Título: ${art.titulo || ''}</h4>
-                <p><strong>Link:</strong> 
-                  <a href="${art.link || '#'}" target="_blank">${art.link || ''}</a>
-                </p>
-                <p><strong>Nota:</strong> ${art.nota || ''}</p>
-                <p><strong>Resumo:</strong> ${art.resumo || ''}</p>
-              </div>
-            `;
-          });
-        }
-
-        if (!html) {
-          html = 'Nenhum dado relevante.';
-        }
-        resultado.innerHTML = html;
-
-      } catch (error) {
-        resultado.textContent = `Erro: ${error.message}`;
-      }
-    });
-  </script>
-</body>
-</html>
+// 4) Iniciar o servidor
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}...`);
+});
