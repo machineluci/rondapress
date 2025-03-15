@@ -3,29 +3,30 @@ const fetch = require('node-fetch');  // Se Node < 18
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// In-memory store (se estiver usando o esquema de salvar resultados em memória)
+// In-memory store p/ resultados (se for usar a abordagem do /api/save-result)
 const jobResults = {};
 
-/**
- * 1) Middleware para aceitar JSON (até 5 MB) e servir arquivos estáticos
- */
+// 1) Aceitar até 5 MB de JSON + servir estáticos
 app.use(express.json({ limit: '5mb' }));
 app.use(express.static('public'));
 
 /**
  * 2) /api/start-n8n
- *    - Chama "Start Job Webhook" do n8n (rota GET)
+ *    - Chama o Start Job Webhook no n8n
  */
 app.get('/api/start-n8n', async (req, res) => {
   try {
-    // Ajuste a URL para seu "Start Job Webhook" do n8n
-    const startEndpoint = 'https://SEU-N8N-DOMINIO/webhook/start-job';
+    // Use a PRODUCTION URL do seu Start Job Webhook
+    const startEndpoint = 'https://makeone.app.n8n.cloud/webhook/webhook/start-job';
 
     const response = await fetch(startEndpoint, { method: 'GET' });
     if (!response.ok) {
       throw new Error(`Erro ao iniciar job no n8n: ${response.statusText}`);
     }
+
+    // Ex.: { jobId: "JOB-1678907890", userMessage: "Processando..." }
     const data = await response.json();
+    // Repassa ao front-end
     res.json(data);
 
   } catch (err) {
@@ -54,7 +55,7 @@ app.post('/api/save-result', (req, res) => {
 
 /**
  * 4) /api/status-n8n?jobId=XYZ
- *    - O front-end faz polling para ver se finalizou.
+ *    - O front-end faz polling para ver se finalizou
  */
 app.get('/api/status-n8n', (req, res) => {
   const { jobId } = req.query;
