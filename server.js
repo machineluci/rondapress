@@ -10,7 +10,7 @@ app.use(express.static('public'));
 app.get('/api/chamar-n8n', async (req, res) => {
   try {
     // Substitua aqui pela Production Webhook URL do seu fluxo n8n (método GET)
-    const n8nEndpoint = 'https://makeone.app.n8n.cloud/webhook/837b4994-f89a-4386-9a76-2f38f0742637';
+    const n8nEndpoint = 'https://makeone.app.n8n.cloud/webhook/3c536b37-5402-4516-8262-3efe2d965715';
 
     // Faz a requisição GET ao endpoint do n8n
     const response = await fetch(n8nEndpoint, { method: 'GET' });
