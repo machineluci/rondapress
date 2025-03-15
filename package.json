@@ -1,7 +1,6 @@
 {
   "name": "rondapress",
   "version": "1.0.0",
-  "description": "Ronda Jornalística - POC",
   "scripts": {
     "start": "node server.js"
   },
@@ -10,4 +9,3 @@
     "node-fetch": "^2.6.7"
   }
 }
-
