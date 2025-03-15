@@ -1,71 +1,140 @@
-const express = require('express');
-const fetch = require('node-fetch'); // para Node < 18
-const app = express();
-const PORT = process.env.PORT || 3000;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demonstração - RondaPress</title>
 
-// 1) Servir arquivos estáticos da pasta "public"
-app.use(express.static('public'));
+  <!-- Fonte e CSS -->
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 
-/**
- *  2) /api/start-n8n
- *     - Chama o webhook "Start Job" no n8n (que usa "Respond to Webhook" para retornar { jobId, ... } imediatamente).
- *     - Devolve esse JSON ao front-end.
- */
-app.get('/api/start-n8n', async (req, res) => {
-  try {
-    // URL de produção do seu Start Job Webhook (GET)
-    const startEndpoint = 'https://makeone.app.n8n.cloud/webhook/webhook/start-job';
+  <style>
+    /* Estilos específicos da demo */
+    .headlines-title { /* ... */ }
+    .headlines-list { /* ... */ }
+    .articles-title { /* ... */ }
+    .article-container { /* ... */ }
+  </style>
+</head>
+<body>
 
-    // Faz a chamada ao n8n
-    const response = await fetch(startEndpoint, { method: 'GET' });
-    if (!response.ok) {
-      throw new Error(`Erro ao iniciar job no n8n: ${response.statusText}`);
+  <header class="site-header">
+    <a class="logo" href="/">RondaPress</a>
+  </header>
+
+  <section class="center-container">
+    <div class="form-card">
+      <h2 class="form-title">Ronda Jornalística Automática</h2>
+      <p class="form-subtitle">
+        Clique para gerar sugestões de manchetes...
+      </p>
+
+      <button id="btnGerar" class="btn-dark" style="margin-bottom:1.5rem;">
+        Gerar Manchetes
+      </button>
+
+      <div id="resultado" style="font-size:0.95rem;"></div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <p>© 2025 RondaPress — Todos os direitos reservados.</p>
+  </footer>
+
+  <script>
+    const btnGerar = document.getElementById('btnGerar');
+    const resultado = document.getElementById('resultado');
+
+    btnGerar.addEventListener('click', async () => {
+      resultado.textContent = 'Iniciando processamento...';
+
+      try {
+        // Chama /api/start-n8n => inicia job no n8n
+        const startRes = await fetch('/api/start-n8n');
+        if (!startRes.ok) {
+          throw new Error('Falha ao iniciar job no n8n');
+        }
+        const startData = await startRes.json();
+        const jobId = startData.jobId;
+
+        resultado.textContent = `Job iniciado (ID = ${jobId}). Aguardando resultados...`;
+
+        // Polling: checa status a cada 5s, até 15 min
+        const POLL_INTERVAL = 5000; 
+        const TIMEOUT = 15 * 60 * 1000;
+        let elapsed = 0;
+
+        const intervalId = setInterval(async () => {
+          elapsed += POLL_INTERVAL;
+          if (elapsed >= TIMEOUT) {
+            clearInterval(intervalId);
+            resultado.textContent = 'Tempo limite excedido. Tente novamente.';
+            return;
+          }
+
+          try {
+            const statusRes = await fetch(`/api/status-n8n?jobId=${jobId}`);
+            if (!statusRes.ok) {
+              throw new Error('Erro ao checar status do n8n');
+            }
+            const data = await statusRes.json();
+
+            if (data.done === false) {
+              resultado.textContent = `Processando... (Job: ${jobId})`;
+            } else if (data.done === true) {
+              clearInterval(intervalId);
+              exibirResultados(data);
+            } else {
+              console.log('Resposta parcial/desconhecida:', data);
+            }
+
+          } catch (pollErr) {
+            clearInterval(intervalId);
+            resultado.textContent = `Erro no polling: ${pollErr.message}`;
+          }
+
+        }, POLL_INTERVAL);
+
+      } catch (err) {
+        resultado.textContent = `Erro ao iniciar: ${err.message}`;
+      }
+    });
+
+    // Renderiza manchetes e artigos
+    function exibirResultados(data) {
+      const { headlines, artigos } = data;
+      let html = '';
+
+      if (Array.isArray(headlines) && headlines.length) {
+        html += `<h3 class="headlines-title">Sugestões de Manchetes</h3><ul class="headlines-list">`;
+        headlines.forEach(m => html += `<li>${m}</li>`);
+        html += '</ul>';
+      }
+
+      if (Array.isArray(artigos) && artigos.length) {
+        html += `<h3 class="articles-title">Últimas Notícias</h3>`;
+        artigos.forEach(a => {
+          html += `
+            <div class="article-container">
+              <h4>Título: ${a.titulo || ''}</h4>
+              <p><strong>Link:</strong>
+                <a href="${a.link || '#'}" target="_blank">${a.link || ''}</a>
+              </p>
+              <p><strong>Nota:</strong> ${a.nota || ''}</p>
+              <p><strong>Resumo:</strong> ${a.resumo || ''}</p>
+            </div>
+          `;
+        });
+      }
+
+      if (!html) {
+        html = 'Nenhum dado encontrado.';
+      }
+      resultado.innerHTML = html;
     }
-
-    // Esperamos algo como { jobId: "...", userFacingMessage: "..." }
-    const data = await response.json();
-    // repassamos ao front-end
-    res.json(data);
-
-  } catch (err) {
-    console.error('Erro ao iniciar job no n8n:', err);
-    res.status(500).json({ error: 'Ocorreu um erro ao iniciar o job no n8n.' });
-  }
-});
-
-/**
- *  3) /api/status-n8n?jobId=XYZ
- *     - O front-end fará polling a cada X segundos para ver se o job terminou.
- *     - Chamamos o webhook de "Check Status" no n8n com o mesmo jobId.
- *       Se pronto, retorna { done: true, headlines: [...], artigos: [...] }.
- *       Se ainda em processamento, retorna { done: false }.
- */
-app.get('/api/status-n8n', async (req, res) => {
-  try {
-    const { jobId } = req.query;
-    if (!jobId) {
-      return res.status(400).json({ error: 'Faltou jobId.' });
-    }
-
-    // URL de produção do Check Status Webhook (GET)
-    const statusEndpoint = `https://makeone.app.n8n.cloud/webhook/webhook/check-status?jobId=${jobId}`;
-
-    const response = await fetch(statusEndpoint, { method: 'GET' });
-    if (!response.ok) {
-      throw new Error(`Erro ao checar status no n8n: ${response.statusText}`);
-    }
-
-    // Esperamos { done: false } ou { done: true, headlines: [...], artigos: [...] }
-    const data = await response.json();
-    res.json(data);
-
-  } catch (err) {
-    console.error('Erro ao checar status n8n:', err);
-    res.status(500).json({ error: 'Ocorreu um erro ao checar status no n8n.' });
-  }
-});
-
-// 4) Iniciar o servidor
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}...`);
-});
+  </script>
+</body>
+</html>
