@@ -1,35 +1,31 @@
 const express = require('express');
-const fetch = require('node-fetch'); // Se Node < 18
+const fetch = require('node-fetch');  // Se Node < 18
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// =============
-// 1) In-Memory Store
-// =============
+// In-memory store (se estiver usando o esquema de salvar resultados em memória)
 const jobResults = {};
 
-// 2) Middlewares
-app.use(express.static('public')); // Serve index.html, demo.html, styles.css
-app.use(express.json()); // Para ler JSON no body (importante para /api/save-result)
+/**
+ * 1) Middleware para aceitar JSON (até 5 MB) e servir arquivos estáticos
+ */
+app.use(express.json({ limit: '5mb' }));
+app.use(express.static('public'));
 
-// =============
-// 3) /api/start-n8n
-//    - Chama "Start Job Webhook" no n8n
-//    - Recebe { jobId } e retorna ao front-end
-// =============
+/**
+ * 2) /api/start-n8n
+ *    - Chama "Start Job Webhook" do n8n (rota GET)
+ */
 app.get('/api/start-n8n', async (req, res) => {
   try {
-    // Ajuste a URL para seu "Start Job Webhook" no n8n
-    const startEndpoint = 'https://makeone.app.n8n.cloud/webhook/webhook/start-job';
+    // Ajuste a URL para seu "Start Job Webhook" do n8n
+    const startEndpoint = 'https://SEU-N8N-DOMINIO/webhook/start-job';
 
     const response = await fetch(startEndpoint, { method: 'GET' });
     if (!response.ok) {
       throw new Error(`Erro ao iniciar job no n8n: ${response.statusText}`);
     }
-
-    // Ex: { jobId: "JOB-1678907890", userMessage: "Processando..." }
     const data = await response.json();
-    // Repassa ao front-end
     res.json(data);
 
   } catch (err) {
@@ -38,18 +34,16 @@ app.get('/api/start-n8n', async (req, res) => {
   }
 });
 
-// =============
-// 4) /api/save-result?jobId=XYZ
-//    - Chamado pelo n8n ao final do fluxo (HTTP Request Node).
-//    - Salva { headlines, artigos } em memória => jobResults[jobId].
-// =============
+/**
+ * 3) /api/save-result?jobId=XYZ
+ *    - Chamado no final do fluxo do n8n (HTTP Request Node),
+ *      com o body JSON (até 5 MB).
+ */
 app.post('/api/save-result', (req, res) => {
   const { jobId } = req.query;
   if (!jobId) {
     return res.status(400).json({ error: 'Faltou jobId na query.' });
   }
-
-  // Ex.: { headlines: [...], artigos: [...] }
   jobResults[jobId] = {
     done: true,
     ...req.body
@@ -58,38 +52,23 @@ app.post('/api/save-result', (req, res) => {
   res.json({ success: true });
 });
 
-// =============
-// 5) /api/status-n8n?jobId=XYZ
-//    - O front-end faz polling aqui.
-//    - Se não tiver nada => { done: false }
-//    - Se já salvamos => devolvemos { done: true, headlines, artigos }
-// =============
+/**
+ * 4) /api/status-n8n?jobId=XYZ
+ *    - O front-end faz polling para ver se finalizou.
+ */
 app.get('/api/status-n8n', (req, res) => {
-  try {
-    const { jobId } = req.query;
-    if (!jobId) {
-      return res.status(400).json({ error: 'Faltou jobId.' });
-    }
-
-    // Verifica se já temos algo em jobResults
-    const record = jobResults[jobId];
-    if (!record) {
-      // Não achou => ainda processando
-      return res.json({ done: false });
-    }
-
-    // Se achou => job finalizado
-    res.json(record);
-
-  } catch (err) {
-    console.error('Erro ao checar status no server memory:', err);
-    res.status(500).json({ error: 'Ocorreu um erro ao checar status no server.' });
+  const { jobId } = req.query;
+  if (!jobId) {
+    return res.status(400).json({ error: 'Faltou jobId.' });
   }
+  const record = jobResults[jobId];
+  if (!record) {
+    return res.json({ done: false });
+  }
+  res.json(record);
 });
 
-// =============
-// 6) Inicia o servidor
-// =============
+// 5) Inicia o servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}...`);
 });
