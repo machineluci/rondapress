@@ -74,9 +74,10 @@ a:hover {
   background-color: #333;
 }
 
-/* Para centralizar o botão */
+/* Para centralizar o botão dentro do card */
 .button-container {
-  text-align: center;
+  display: flex;
+  justify-content: center;
   margin-bottom: 1.5rem;
 }
 
@@ -90,7 +91,7 @@ a:hover {
   padding: 2rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 
-  /* Alinhar texto à esquerda */
+  /* Texto à esquerda */
   text-align: left; 
 
   /* Quebrar conteúdo grande */
@@ -128,7 +129,7 @@ a:hover {
 }
 
 .headlines-list {
-  list-style: none; /* Remove bullets do <ul> */
+  list-style: none;  /* Remove bolinhas do UL */
   padding-left: 0;
   margin-bottom: 1.5rem;
 }
