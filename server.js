@@ -1,5 +1,6 @@
 /************************************************************
- * server.js - Versão com logs de debug para ver raw exato
+ * server.js - Versão final: parse automático robusto
+ *   - Não requer mudar fluxo do n8n.
  ************************************************************/
 const express = require('express');
 const fetch = require('node-fetch'); // se Node < 18
@@ -16,6 +17,8 @@ app.use(express.static('public'));
 
 /**
  * 2) Conexão com Supabase
+ *    - Defina as variáveis:
+ *      SUPABASE_URL  e  SUPABASE_SERVICE_KEY
  */
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
@@ -23,12 +26,13 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 /**
  * 3) /api/start-n8n
+ *    - Inicia o fluxo no n8n via GET
  */
 app.get('/api/start-n8n', async (req, res) => {
   try {
     console.log('[SERVER] Iniciando fluxo n8n via start-job webhook...');
-
     const startEndpoint = 'https://makeone.app.n8n.cloud/webhook/webhook/start-job';
+
     const response = await fetch(startEndpoint, { method: 'GET' });
     if (!response.ok) {
       throw new Error(`Erro ao iniciar job no n8n: ${response.statusText}`);
@@ -46,7 +50,8 @@ app.get('/api/start-n8n', async (req, res) => {
 
 /**
  * 4) /api/save-result?jobId=XYZ
- *    - Chamado pelo n8n ao terminar
+ *    - Chamado pelo n8n ao finalizar o fluxo.
+ *    - Salva no DB (coluna raw) tudo o que o n8n mandar.
  */
 app.post('/api/save-result', async (req, res) => {
   const { jobId } = req.query;
@@ -56,16 +61,15 @@ app.post('/api/save-result', async (req, res) => {
 
   try {
     console.log(`[SERVER] /api/save-result chamado. jobId=${jobId}`);
-    console.log('[SERVER] Conteúdo recebido do n8n em req.body:', JSON.stringify(req.body, null, 2));
+    console.log('[SERVER] Corpo recebido do n8n (req.body):', JSON.stringify(req.body, null, 2));
 
-    // Insere no Supabase
     const { data, error } = await supabase
       .from('openai_output')
       .insert([
         {
           job_id: jobId,
           done: true,
-          raw: req.body  // Armazenamos exatamente o que chegou
+          raw: req.body // Armazena 1:1 o que chegou do n8n
         }
       ]);
 
@@ -85,7 +89,8 @@ app.post('/api/save-result', async (req, res) => {
 
 /**
  * 5) /api/status-n8n?jobId=XYZ
- *    - Polling do front
+ *    - O front faz polling aqui a cada X segundos.
+ *    - Tenta parsear .manchetes_do_dia e .artigos_finalistas de qualquer jeito.
  */
 app.get('/api/status-n8n', async (req, res) => {
   const { jobId } = req.query;
@@ -94,10 +99,10 @@ app.get('/api/status-n8n', async (req, res) => {
   }
 
   try {
-    console.log(`[SERVER] Recebi polling p/ jobId="${jobId}"`);
+    console.log(`[SERVER] Polling p/ jobId="${jobId}"`);
     const pattern = jobId.replace(/[%_]/g, '\\$&');
 
-    // Tenta achar a row
+    // Localiza a linha no supabase
     const { data, error } = await supabase
       .from('openai_output')
       .select('*')
@@ -105,50 +110,88 @@ app.get('/api/status-n8n', async (req, res) => {
       .maybeSingle();
 
     if (error) {
-      console.error('[SERVER] Erro ao buscar no Supabase:', error);
+      console.error('[SERVER] Erro ao consultar DB:', error);
       return res.status(500).json({ error: 'Falha ao consultar DB.' });
     }
 
-    // Se não achou ou done=false
+    // Se não achou ou (done=false)
     if (!data || !data.done) {
-      console.log('[SERVER] Ainda não finalizado ou não achou. Retornando done=false...');
+      console.log('[SERVER] Ainda não finalizado ou não existe. Retornando done=false...');
       return res.json({ done: false });
     }
 
-    // Se achou e done=true
-    const raw = data.raw || {};
-    console.log('[SERVER] Row do DB (done=true). raw:', JSON.stringify(raw, null, 2));
+    // Tenta extrair as arrays
+    console.log('[SERVER] Achou row done=true. raw:', JSON.stringify(data.raw, null, 2));
 
-    // Tenta parsear raw.message.content se for string
-    let content = raw?.message?.content;
-    if (typeof content === 'string') {
-      try {
-        content = JSON.parse(content);
-      } catch (err) {
-        console.error('[SERVER] Falha ao dar JSON.parse no content:', err);
-        content = {};
-      }
-    }
+    const { manchetes, artigos } = extraiaDados(data.raw);
+    console.log('[SERVER] Retornando headlines/artigos:', manchetes, artigos);
 
-    // Extrai arrays
-    const headlines = content?.manchetes_do_dia || [];
-    const artigos = content?.artigos_finalistas || [];
-
-    console.log('[SERVER] Retornando headlines/artigos ao front:', headlines, artigos);
     return res.json({
       done: true,
-      headlines,
+      headlines: manchetes,
       artigos
     });
 
   } catch (err) {
-    console.error('[SERVER] Erro inesperado ao checar status:', err);
+    console.error('[SERVER] Erro inesperado no polling:', err);
     return res.status(500).json({ error: 'Erro inesperado ao checar status do job.' });
   }
 });
 
 /**
- * 6) Subida do servidor
+ * 6) Função auxiliar que tenta de todo jeito achar e parsear
+ *    "manchetes_do_dia" e "artigos_finalistas".
+ */
+function extraiaDados(raw) {
+  // 1) Se for string, tente parsear
+  let obj;
+  if (typeof raw === 'string') {
+    try {
+      obj = JSON.parse(raw);
+    } catch {
+      obj = {};
+    }
+  } else {
+    obj = raw || {};
+  }
+
+  // 2) Se tiver .message como string, parse
+  if (typeof obj.message === 'string') {
+    try {
+      obj.message = JSON.parse(obj.message);
+    } catch {
+      // sem drama
+    }
+  }
+
+  // 3) Se tiver .message.content como string, parse
+  if (obj.message && typeof obj.message.content === 'string') {
+    try {
+      obj.message.content = JSON.parse(obj.message.content);
+    } catch {
+      // sem drama
+    }
+  }
+
+  // 4) Tenta ler arrays
+  const manchetes =
+    obj?.message?.content?.manchetes_do_dia ||
+    obj?.manchetes_do_dia ||
+    [];
+  const artigos =
+    obj?.message?.content?.artigos_finalistas ||
+    obj?.artigos_finalistas ||
+    [];
+
+  // Sempre retorna arrays (mesmo que vazios)
+  return {
+    manchetes: Array.isArray(manchetes) ? manchetes : [],
+    artigos: Array.isArray(artigos) ? artigos : []
+  };
+}
+
+/**
+ * 7) Sobe o servidor
  */
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}...`);
