@@ -1,5 +1,5 @@
 /************************************************************
- * server.js - Exemplo Final com maybeSingle + logs + LIKE
+ * server.js - Versão com parse automático de content
  ************************************************************/
 const express = require('express');
 const fetch = require('node-fetch'); // se Node < 18
@@ -28,7 +28,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 /**
  * 3) /api/start-n8n
- *    - Inicia o fluxo no n8n via webhook
+ *    - Inicia o fluxo no n8n via webhook (GET)
  */
 app.get('/api/start-n8n', async (req, res) => {
   try {
@@ -41,7 +41,7 @@ app.get('/api/start-n8n', async (req, res) => {
       throw new Error(`Erro ao iniciar job no n8n: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = await response.json(); 
     // Ex.: data = { jobId: "JOB-1678907890", userMessage: "...", ... }
     console.log('[SERVER] Resposta do n8n no start:', data);
 
@@ -55,8 +55,8 @@ app.get('/api/start-n8n', async (req, res) => {
 
 /**
  * 4) /api/save-result?jobId=XYZ
- *    - Chamado no final do fluxo do n8n (quando terminar)
- *    - Salva no Supabase
+ *    - Chamado no final do fluxo do n8n (POST)
+ *    - Salva no Supabase a linha com (done=true, raw=...)
  */
 app.post('/api/save-result', async (req, res) => {
   const { jobId } = req.query;
@@ -66,7 +66,8 @@ app.post('/api/save-result', async (req, res) => {
 
   try {
     console.log(`[SERVER] /api/save-result chamado. jobId=${jobId}`);
-    // Insere a linha no Supabase com done=true
+
+    // Insere a linha no Supabase
     const { data, error } = await supabase
       .from('openai_output')
       .insert([
@@ -93,9 +94,10 @@ app.post('/api/save-result', async (req, res) => {
 
 /**
  * 5) /api/status-n8n?jobId=XYZ
- *    - O front-end faz polling aqui para ver se finalizou
- *    - Com .maybeSingle() evitamos erro 500 quando 0 rows
- *    - Agora usamos .like('job_id', jobId + '%') pra ignorar eventuais \n, espaços etc.
+ *    - Front faz polling aqui a cada X segundos
+ *    - .maybeSingle() evita erro quando 0 rows
+ *    - .like() lida com eventuais quebras de linha no 'job_id'
+ *    - Faremos parse de raw.message.content se for string
  */
 app.get('/api/status-n8n', async (req, res) => {
   const { jobId } = req.query;
@@ -109,30 +111,41 @@ app.get('/api/status-n8n', async (req, res) => {
     // Evitar problemas se jobId tiver '%' ou '_' (wildcards do LIKE)
     const pattern = jobId.replace(/[%_]/g, '\\$&');
 
-    // Em vez de eq('job_id', jobId), usamos like('job_id', jobId + '%')
-    // Assim, se o DB tiver "JOB-123\n\n", ainda vai bater no prefixo "JOB-123"
+    // Busca por job_id que comece com o pattern
     const { data, error } = await supabase
       .from('openai_output')
       .select('*')
       .like('job_id', pattern + '%')
       .maybeSingle();
 
-    console.log('[SERVER] Supabase data=', data);
-
     if (error) {
       console.error('[SERVER] Erro ao buscar no Supabase:', error);
       return res.status(500).json({ error: 'Falha ao consultar DB.' });
     }
 
-    // Se não achou row (data=null) ou found mas done=false => {done:false}
+    // Se não achou row ou achou mas done=false
     if (!data || !data.done) {
       return res.json({ done: false });
     }
 
-    // Se achou e done=true => retorna headlines/artigos
+    // Caso done=true, precisamos extrair .manchetes_do_dia e .artigos_finalistas
+    // Observando que data.raw pode ter message.content como string
     const raw = data.raw || {};
-    const headlines = raw?.message?.content?.manchetes_do_dia || [];
-    const artigos = raw?.message?.content?.artigos_finalistas || [];
+    let content = raw?.message?.content;
+
+    // Se for string, tentamos parsear
+    if (typeof content === 'string') {
+      try {
+        content = JSON.parse(content);
+      } catch (err) {
+        console.error('[SERVER] Falha ao dar JSON.parse no content:', err);
+        content = {};
+      }
+    }
+
+    // Extraímos arrays
+    const headlines = content?.manchetes_do_dia || [];
+    const artigos = content?.artigos_finalistas || [];
 
     console.log('[SERVER] Achou row done=true, retornando manchetes/artigos...');
     return res.json({
