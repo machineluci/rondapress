@@ -55,6 +55,7 @@
 
       try {
         // 1) Dispara o fluxo no n8n
+        console.log('[FRONT] Fazendo GET /api/start-n8n');
         const startRes = await fetch('/api/start-n8n');
         if (!startRes.ok) {
           throw new Error('Falha ao iniciar processamento no servidor.');
@@ -62,21 +63,29 @@
 
         // 2) Lê a resposta do n8n, que pode ser um objeto ou array [ { ... } ]
         let startData = await startRes.json();
+        console.log('[FRONT] Resposta bruta de /api/start-n8n:', startData);
+
         // Se vier array, extrai o primeiro elemento
         if (Array.isArray(startData)) {
           startData = startData[0];
+          console.log('[FRONT] startData[0]:', startData);
         }
 
         // Extrai o jobId (removendo '==' se vier)
         let jobId = startData?.jobId || '';
+        console.log('[FRONT] jobId antes de remover "==":', jobId);
+
         if (jobId.startsWith('==')) {
           jobId = jobId.slice(2); // remove os dois primeiros caracteres
+          console.log('[FRONT] jobId depois de remover "==":', jobId);
         }
+
         if (!jobId) {
           throw new Error('Não foi possível obter jobId do servidor.');
         }
 
         // 3) Polling: checa status a cada 5s, até 15 min
+        console.log('[FRONT] Iniciando polling com jobId:', jobId);
         const POLL_INTERVAL = 5000; 
         const TIMEOUT = 15 * 60 * 1000; // 15 minutos
         let elapsed = 0;
@@ -90,11 +99,14 @@
           }
 
           try {
-            const statusRes = await fetch(`/api/status-n8n?jobId=${jobId}`);
+            const urlStatus = `/api/status-n8n?jobId=${jobId}`;
+            console.log('[FRONT] Polling GET:', urlStatus);
+            const statusRes = await fetch(urlStatus);
             if (!statusRes.ok) {
               throw new Error('Erro ao checar status no servidor.');
             }
             const data = await statusRes.json();
+            console.log('[FRONT] Resposta do /api/status-n8n:', data);
 
             if (data.done === false) {
               // Ainda em processamento
@@ -115,6 +127,7 @@
         }, POLL_INTERVAL);
 
       } catch (err) {
+        console.error('[FRONT] Erro ao iniciar:', err);
         resultado.textContent = `Erro ao iniciar: ${err.message}`;
       }
     });
