@@ -71,14 +71,13 @@
           console.log('[FRONT] startData[0]:', startData);
         }
 
-        // Extrai o jobId (removendo '==' se vier)
+        // Extrai o jobId (e remove '=' no início, se houver)
         let jobId = startData?.jobId || '';
-        console.log('[FRONT] jobId antes de remover "==":', jobId);
+        console.log('[FRONT] jobId antes de remover "=":', jobId);
 
-        if (jobId.startsWith('==')) {
-          jobId = jobId.slice(2); // remove os dois primeiros caracteres
-          console.log('[FRONT] jobId depois de remover "==":', jobId);
-        }
+        // Remove todos '=' do início da string
+        jobId = jobId.replace(/^=+/, '');
+        console.log('[FRONT] jobId depois de remover "=":', jobId);
 
         if (!jobId) {
           throw new Error('Não foi possível obter jobId do servidor.');
@@ -134,7 +133,6 @@
 
     // Exibe Manchetes e Artigos
     function exibirResultados(data) {
-      // Ajuste conforme a estrutura de /api/status-n8n
       const { headlines, artigos } = data;
       let html = '';
 
