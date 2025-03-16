@@ -59,10 +59,21 @@
         if (!startRes.ok) {
           throw new Error('Falha ao iniciar processamento no servidor.');
         }
-        const startData = await startRes.json();
-        const jobId = startData.jobId;
 
-        // 2) Polling: checa status a cada 5s, até 15 min
+        // 2) Lê a resposta do n8n, que pode ser um objeto ou array [ { ... } ]
+        let startData = await startRes.json();
+        // Se vier array, extrai o primeiro elemento
+        if (Array.isArray(startData)) {
+          startData = startData[0];
+        }
+
+        // Extrai o jobId
+        const jobId = startData?.jobId;
+        if (!jobId) {
+          throw new Error('Não foi possível obter jobId do servidor.');
+        }
+
+        // 3) Polling: checa status a cada 5s, até 15 min
         const POLL_INTERVAL = 5000; 
         const TIMEOUT = 15 * 60 * 1000; // 15 minutos
         let elapsed = 0;
@@ -90,7 +101,6 @@
               clearInterval(intervalId);
               exibirResultados(data);
             } else {
-              // Caso não tenha done, pode ignorar ou logar
               console.log('Resposta parcial/desconhecida:', data);
             }
 
@@ -106,9 +116,9 @@
       }
     });
 
-    // 3) Exibe Manchetes e Artigos
+    // Exibe Manchetes e Artigos
     function exibirResultados(data) {
-      // Ajustar caso seu /api/status-n8n retorne campos diferentes
+      // Ajuste conforme a estrutura de /api/status-n8n
       const { headlines, artigos } = data;
       let html = '';
 
