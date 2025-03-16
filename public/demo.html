@@ -67,8 +67,11 @@
           startData = startData[0];
         }
 
-        // Extrai o jobId
-        const jobId = startData?.jobId;
+        // Extrai o jobId (removendo '==' se vier)
+        let jobId = startData?.jobId || '';
+        if (jobId.startsWith('==')) {
+          jobId = jobId.slice(2); // remove os dois primeiros caracteres
+        }
         if (!jobId) {
           throw new Error('Não foi possível obter jobId do servidor.');
         }
