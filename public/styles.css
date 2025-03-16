@@ -30,14 +30,14 @@ html, body {
 }
 
 /* ==================
-   HEADER (logo sempre centralizado)
+   HEADER
 ================== */
 .site-header {
   padding: 1rem;
   border-bottom: 1px solid #eee;
   display: flex;
   align-items: center;
-  justify-content: center; /* centraliza logo */
+  justify-content: center;
 }
 
 .site-header .logo {
@@ -86,54 +86,6 @@ a:visited {
 }
 
 /* ==================
-   HERO SECTION
-================== */
-.hero {
-  text-align: center;
-  padding: 5rem 1rem;
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.hero-title {
-  font-size: 3.5rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.hero-subtitle {
-  font-size: 1.25rem;
-  margin-bottom: 2rem;
-  color: #333;
-}
-
-.hero-description {
-  font-size: 1rem;
-  color: #555;
-  margin-bottom: 2rem;
-  max-width: 700px;
-  line-height: 1.5;
-  margin: 0 auto 2rem;
-}
-
-@media (max-width: 480px) {
-  .hero-title {
-    font-size: 2.4rem;
-  }
-  .hero-subtitle {
-    font-size: 1.1rem;
-  }
-}
-
-/* ==================
-   SEÇÃO DE DESTAQUE
-================== */
-.highlight-section {
-  padding: 4rem 1rem;
-  text-align: center;
-}
-
-/* ==================
    FORM CARD
 ================== */
 .form-card {
@@ -144,13 +96,15 @@ a:visited {
   max-width: 700px;
   padding: 2rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  text-align: center;
+  text-align: justify; /* Texto justificado na moldura */
+  overflow-wrap: break-word; /* Quebrar palavras grandes */
 }
 
 .form-title {
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 1rem;
+  text-align: center; /* Pode manter centralizado só o título */
 }
 
 .form-subtitle {
@@ -158,6 +112,43 @@ a:visited {
   color: #666;
   margin-bottom: 1.5rem;
   line-height: 1.4;
+  text-align: center;
+}
+
+/* ==================
+   LISTAS DE MANCHETES
+================== */
+.headlines-title {
+  margin-top: 1.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.headlines-list {
+  list-style-type: none; /* Remove bullets */
+  padding-left: 0;
+  margin-bottom: 1.5rem;
+}
+
+.headlines-list li {
+  margin-bottom: 0.5rem;
+  word-wrap: break-word; /* Se tiver uma palavra enorme */
+}
+
+/* ==================
+   ARTIGOS
+================== */
+.articles-title {
+  margin-top: 1.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.article-container {
+  border: 1px solid #ddd;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  word-wrap: break-word;
 }
 
 /* ==================
