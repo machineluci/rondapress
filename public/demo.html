@@ -13,10 +13,10 @@
 
   <style>
     /* Estilos específicos da demo */
-    .headlines-title { /* ... */ }
-    .headlines-list { /* ... */ }
-    .articles-title { /* ... */ }
-    .article-container { /* ... */ }
+    .headlines-title { margin-top: 1.5rem; font-size: 1.2rem; font-weight: 600; }
+    .headlines-list { list-style: disc; padding-left: 1.5rem; margin-bottom: 1.5rem; }
+    .articles-title { margin-top: 1.5rem; font-size: 1.2rem; font-weight: 600; }
+    .article-container { border: 1px solid #ddd; padding: 0.8rem; margin-bottom: 1rem; }
   </style>
 </head>
 <body>
@@ -49,22 +49,22 @@
     const resultado = document.getElementById('resultado');
 
     btnGerar.addEventListener('click', async () => {
-      resultado.textContent = 'Iniciando processamento...';
+      // Mensagem inicial ao usuário
+      resultado.textContent = 
+        'Coletando notícias relevantes e realizando análise com IA. Por favor aguarde...';
 
       try {
-        // Chama /api/start-n8n => inicia job no n8n
+        // 1) Dispara o fluxo no n8n
         const startRes = await fetch('/api/start-n8n');
         if (!startRes.ok) {
-          throw new Error('Falha ao iniciar job no n8n');
+          throw new Error('Falha ao iniciar processamento no servidor.');
         }
         const startData = await startRes.json();
         const jobId = startData.jobId;
 
-        resultado.textContent = `Job iniciado (ID = ${jobId}). Aguardando resultados...`;
-
-        // Polling: checa status a cada 5s, até 15 min
+        // 2) Polling: checa status a cada 5s, até 15 min
         const POLL_INTERVAL = 5000; 
-        const TIMEOUT = 15 * 60 * 1000;
+        const TIMEOUT = 15 * 60 * 1000; // 15 minutos
         let elapsed = 0;
 
         const intervalId = setInterval(async () => {
@@ -78,16 +78,19 @@
           try {
             const statusRes = await fetch(`/api/status-n8n?jobId=${jobId}`);
             if (!statusRes.ok) {
-              throw new Error('Erro ao checar status do n8n');
+              throw new Error('Erro ao checar status no servidor.');
             }
             const data = await statusRes.json();
 
             if (data.done === false) {
-              resultado.textContent = `Processando... (Job: ${jobId})`;
+              // Ainda em processamento
+              resultado.textContent = 
+                'Análise em andamento... (Isso pode levar alguns minutos.)';
             } else if (data.done === true) {
               clearInterval(intervalId);
               exibirResultados(data);
             } else {
+              // Caso não tenha done, pode ignorar ou logar
               console.log('Resposta parcial/desconhecida:', data);
             }
 
@@ -103,14 +106,17 @@
       }
     });
 
-    // Renderiza manchetes e artigos
+    // 3) Exibe Manchetes e Artigos
     function exibirResultados(data) {
+      // Ajustar caso seu /api/status-n8n retorne campos diferentes
       const { headlines, artigos } = data;
       let html = '';
 
       if (Array.isArray(headlines) && headlines.length) {
         html += `<h3 class="headlines-title">Sugestões de Manchetes</h3><ul class="headlines-list">`;
-        headlines.forEach(m => html += `<li>${m}</li>`);
+        headlines.forEach(m => {
+          html += `<li>${m}</li>`;
+        });
         html += '</ul>';
       }
 
@@ -119,12 +125,12 @@
         artigos.forEach(a => {
           html += `
             <div class="article-container">
-              <h4>Título: ${a.titulo || ''}</h4>
+              <h4>Título: ${a.Título || ''}</h4>
               <p><strong>Link:</strong>
-                <a href="${a.link || '#'}" target="_blank">${a.link || ''}</a>
+                <a href="${a.Link || '#'}" target="_blank">${a.Link || ''}</a>
               </p>
-              <p><strong>Nota:</strong> ${a.nota || ''}</p>
-              <p><strong>Resumo:</strong> ${a.resumo || ''}</p>
+              <p><strong>Nota:</strong> ${a.Nota || ''}</p>
+              <p><strong>Resumo:</strong> ${a.Resumo || ''}</p>
             </div>
           `;
         });

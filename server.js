@@ -1,41 +1,39 @@
 /************************************************************
- * server.js - Exemplo Completo para Produção
+ * server.js - Exemplo Completo em Produção no Render
  ************************************************************/
 const express = require('express');
-const fetch = require('node-fetch');  // se estiver em Node < 18
+const fetch = require('node-fetch'); // se Node < 18
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 /**
- * 1) Configurações Express:
+ * 1) Configurações Express
  *    - Aceitar até 5 MB de JSON
- *    - Servir estáticos da pasta "public"
+ *    - Servir estáticos da pasta 'public'
  */
 app.use(express.json({ limit: '5mb' }));
 app.use(express.static('public'));
 
 /**
  * 2) Conexão com Supabase
- *    - Defina as variáveis de ambiente no Render:
- *      SUPABASE_URL (ex.: https://xxxxx.supabase.co)
- *      SUPABASE_SERVICE_KEY (chave de serviço, se estiver usando RLS ou quiser inserir sem restrições)
+ *    - Defina no Render (Config Vars):
+ *      SUPABASE_URL=https://xxxx.supabase.co
+ *      SUPABASE_SERVICE_KEY=chave_de_servico
  */
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-// Se você estiver usando apenas a anon key e Policies adequadas, então use a anon key.
-// Em produção, a "service key" facilita pois ignora RLS.
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 /**
  * 3) /api/start-n8n
- *    - Chama o Start Job Webhook no n8n (para iniciar o fluxo)
+ *    - Inicia o fluxo no n8n via webhook
  */
 app.get('/api/start-n8n', async (req, res) => {
   try {
-    const startEndpoint = 'https://makeone.app.n8n.cloud/webhook/webhook/start-job'; 
-    // Substitua pela URL correta do seu webhook de Start no n8n
+    // Substitua pela URL do seu Start Job Webhook n8n
+    const startEndpoint = 'https://makeone.app.n8n.cloud/webhook/webhook/start-job';
 
     const response = await fetch(startEndpoint, { method: 'GET' });
     if (!response.ok) {
@@ -43,7 +41,8 @@ app.get('/api/start-n8n', async (req, res) => {
     }
 
     const data = await response.json();
-    // ex.: { jobId: "JOB-1678907890", userMessage: "Processando..." }
+    // Ex.: data = { jobId: "JOB-1678907890", ... }
+
     return res.json(data);
 
   } catch (err) {
@@ -54,9 +53,8 @@ app.get('/api/start-n8n', async (req, res) => {
 
 /**
  * 4) /api/save-result?jobId=XYZ
- *    - Chamado no final do fluxo do n8n (HTTP Request Node),
- *      com o body JSON (até 5 MB).
- *    - Salva os resultados no Supabase em "openai_output"
+ *    - Chamado no final do fluxo do n8n
+ *    - Salva no Supabase
  */
 app.post('/api/save-result', async (req, res) => {
   const { jobId } = req.query;
@@ -65,11 +63,7 @@ app.post('/api/save-result', async (req, res) => {
   }
 
   try {
-    // Vamos salvar o JSON inteiro em "raw" e marcar done = true
-    // Se quiser garantir que não duplique, podemos usar "upsert".
-    // Mas como o node "Create a Row" no n8n não tem upsert nativo,
-    // aqui é um exemplo de "insert" simples. Se jobId for UNIQUE,
-    // terá erro caso tente inserir de novo.
+    // Insere (ou atualiza) a linha no Supabase
     const { data, error } = await supabase
       .from('openai_output')
       .insert([
@@ -81,8 +75,6 @@ app.post('/api/save-result', async (req, res) => {
       ]);
 
     if (error) {
-      // Se der erro de duplicado e você quiser permitir upsert,
-      // você pode tratar aqui ou usar o "onConflict" no Supabase.
       console.error('Erro ao inserir no Supabase:', error);
       return res.status(500).json({ error: 'Falha ao salvar no DB.' });
     }
@@ -98,8 +90,7 @@ app.post('/api/save-result', async (req, res) => {
 
 /**
  * 5) /api/status-n8n?jobId=XYZ
- *    - O front-end faz polling para ver se finalizou
- *    - Consulta a tabela "openai_output" no Supabase
+ *    - O front-end faz polling aqui para ver se finalizou
  */
 app.get('/api/status-n8n', async (req, res) => {
   const { jobId } = req.query;
@@ -108,7 +99,6 @@ app.get('/api/status-n8n', async (req, res) => {
   }
 
   try {
-    // Busca 1 registro com "job_id = jobId"
     const { data, error } = await supabase
       .from('openai_output')
       .select('*')
@@ -116,23 +106,28 @@ app.get('/api/status-n8n', async (req, res) => {
       .single();
 
     if (error) {
-      // Se vier erro "No rows found", data fica undefined
       console.error('Erro ao buscar no Supabase:', error);
       return res.status(500).json({ error: 'Falha ao consultar DB.' });
     }
 
     if (!data) {
-      // Se não encontrou, não terminou
+      // Se não encontrou, ainda não concluiu
+      return res.json({ done: false });
+    }
+    if (!data.done) {
       return res.json({ done: false });
     }
 
-    // data.done => boolean
-    // data.raw => JSON
-    // Retorna { done: boolean, ...conteúdo } pro front
+    // Reconstruir a estrutura que o front espera
+    const raw = data.raw; // JSON salvo pelo n8n
+    const headlines = raw?.message?.content?.manchetes_do_dia || [];
+    const artigos = raw?.message?.content?.artigos_finalistas || [];
+
+    // Mande de volta { done:true, headlines, artigos }
     return res.json({
-      done: data.done,
-      // Desestruture "raw" conforme preferir
-      ...data.raw
+      done: true,
+      headlines,
+      artigos
     });
 
   } catch (err) {
@@ -142,7 +137,7 @@ app.get('/api/status-n8n', async (req, res) => {
 });
 
 /**
- * 6) Inicia o servidor
+ * 6) Sobe o servidor
  */
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}...`);
