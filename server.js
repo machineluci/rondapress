@@ -1,5 +1,5 @@
 /************************************************************
- * server.js - Exemplo Final com maybeSingle + logs
+ * server.js - Exemplo Final com maybeSingle + logs + LIKE
  ************************************************************/
 const express = require('express');
 const fetch = require('node-fetch'); // se Node < 18
@@ -95,6 +95,7 @@ app.post('/api/save-result', async (req, res) => {
  * 5) /api/status-n8n?jobId=XYZ
  *    - O front-end faz polling aqui para ver se finalizou
  *    - Com .maybeSingle() evitamos erro 500 quando 0 rows
+ *    - Agora usamos .like('job_id', jobId + '%') pra ignorar eventuais \n, espaços etc.
  */
 app.get('/api/status-n8n', async (req, res) => {
   const { jobId } = req.query;
@@ -105,14 +106,17 @@ app.get('/api/status-n8n', async (req, res) => {
   try {
     console.log(`[SERVER] Recebi polling p/ jobId="${jobId}"`);
 
-    // Usamos maybeSingle() => data será null se 0 rows
+    // Evitar problemas se jobId tiver '%' ou '_' (wildcards do LIKE)
+    const pattern = jobId.replace(/[%_]/g, '\\$&');
+
+    // Em vez de eq('job_id', jobId), usamos like('job_id', jobId + '%')
+    // Assim, se o DB tiver "JOB-123\n\n", ainda vai bater no prefixo "JOB-123"
     const { data, error } = await supabase
       .from('openai_output')
       .select('*')
-      .eq('job_id', jobId)
+      .like('job_id', pattern + '%')
       .maybeSingle();
 
-    // Log para ver o que veio
     console.log('[SERVER] Supabase data=', data);
 
     if (error) {
