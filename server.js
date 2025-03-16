@@ -91,6 +91,7 @@ app.post('/api/save-result', async (req, res) => {
 /**
  * 5) /api/status-n8n?jobId=XYZ
  *    - O front-end faz polling aqui para ver se finalizou
+ *    - Agora usamos .maybeSingle(), pra evitar erro 500 caso 0 rows sejam retornadas
  */
 app.get('/api/status-n8n', async (req, res) => {
   const { jobId } = req.query;
@@ -99,26 +100,25 @@ app.get('/api/status-n8n', async (req, res) => {
   }
 
   try {
+    // Usamos maybeSingle() para não retornar erro se 0 rows.
     const { data, error } = await supabase
       .from('openai_output')
       .select('*')
       .eq('job_id', jobId)
-      .single();
+      .maybeSingle();
 
     if (error) {
+      // Se houve um erro real do Supabase (ex.: credenciais)
       console.error('Erro ao buscar no Supabase:', error);
       return res.status(500).json({ error: 'Falha ao consultar DB.' });
     }
 
-    if (!data) {
-      // Se não encontrou, ainda não concluiu
-      return res.json({ done: false });
-    }
-    if (!data.done) {
+    // Se não encontrou (data=null) ou se found mas done=false => continua processando
+    if (!data || !data.done) {
       return res.json({ done: false });
     }
 
-    // Reconstruir a estrutura que o front espera
+    // Se chegou aqui, data.done===true => retorne manchetes/artigos
     const raw = data.raw; // JSON salvo pelo n8n
     const headlines = raw?.message?.content?.manchetes_do_dia || [];
     const artigos = raw?.message?.content?.artigos_finalistas || [];
