@@ -1,5 +1,5 @@
 /************************************************************
- * server.js - Versão com parse automático de content
+ * server.js - Versão com logs de debug para ver raw exato
  ************************************************************/
 const express = require('express');
 const fetch = require('node-fetch'); // se Node < 18
@@ -10,17 +10,12 @@ const PORT = process.env.PORT || 3000;
 
 /**
  * 1) Configurações Express
- *    - Aceitar até 5 MB de JSON
- *    - Servir estáticos da pasta 'public'
  */
 app.use(express.json({ limit: '5mb' }));
 app.use(express.static('public'));
 
 /**
  * 2) Conexão com Supabase
- *    - Defina no Render (Config Vars):
- *      SUPABASE_URL = https://XXXX.supabase.co
- *      SUPABASE_SERVICE_KEY = ...
  */
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
@@ -28,23 +23,19 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 /**
  * 3) /api/start-n8n
- *    - Inicia o fluxo no n8n via webhook (GET)
  */
 app.get('/api/start-n8n', async (req, res) => {
   try {
     console.log('[SERVER] Iniciando fluxo n8n via start-job webhook...');
 
-    // Substitua pela URL do seu Start Job Webhook no n8n
     const startEndpoint = 'https://makeone.app.n8n.cloud/webhook/webhook/start-job';
     const response = await fetch(startEndpoint, { method: 'GET' });
     if (!response.ok) {
       throw new Error(`Erro ao iniciar job no n8n: ${response.statusText}`);
     }
 
-    const data = await response.json(); 
-    // Ex.: data = { jobId: "JOB-1678907890", userMessage: "...", ... }
+    const data = await response.json();
     console.log('[SERVER] Resposta do n8n no start:', data);
-
     return res.json(data);
 
   } catch (err) {
@@ -55,8 +46,7 @@ app.get('/api/start-n8n', async (req, res) => {
 
 /**
  * 4) /api/save-result?jobId=XYZ
- *    - Chamado no final do fluxo do n8n (POST)
- *    - Salva no Supabase a linha com (done=true, raw=...)
+ *    - Chamado pelo n8n ao terminar
  */
 app.post('/api/save-result', async (req, res) => {
   const { jobId } = req.query;
@@ -66,15 +56,16 @@ app.post('/api/save-result', async (req, res) => {
 
   try {
     console.log(`[SERVER] /api/save-result chamado. jobId=${jobId}`);
+    console.log('[SERVER] Conteúdo recebido do n8n em req.body:', JSON.stringify(req.body, null, 2));
 
-    // Insere a linha no Supabase
+    // Insere no Supabase
     const { data, error } = await supabase
       .from('openai_output')
       .insert([
         {
           job_id: jobId,
           done: true,
-          raw: req.body
+          raw: req.body  // Armazenamos exatamente o que chegou
         }
       ]);
 
@@ -94,10 +85,7 @@ app.post('/api/save-result', async (req, res) => {
 
 /**
  * 5) /api/status-n8n?jobId=XYZ
- *    - Front faz polling aqui a cada X segundos
- *    - .maybeSingle() evita erro quando 0 rows
- *    - .like() lida com eventuais quebras de linha no 'job_id'
- *    - Faremos parse de raw.message.content se for string
+ *    - Polling do front
  */
 app.get('/api/status-n8n', async (req, res) => {
   const { jobId } = req.query;
@@ -107,11 +95,9 @@ app.get('/api/status-n8n', async (req, res) => {
 
   try {
     console.log(`[SERVER] Recebi polling p/ jobId="${jobId}"`);
-
-    // Evitar problemas se jobId tiver '%' ou '_' (wildcards do LIKE)
     const pattern = jobId.replace(/[%_]/g, '\\$&');
 
-    // Busca por job_id que comece com o pattern
+    // Tenta achar a row
     const { data, error } = await supabase
       .from('openai_output')
       .select('*')
@@ -123,17 +109,18 @@ app.get('/api/status-n8n', async (req, res) => {
       return res.status(500).json({ error: 'Falha ao consultar DB.' });
     }
 
-    // Se não achou row ou achou mas done=false
+    // Se não achou ou done=false
     if (!data || !data.done) {
+      console.log('[SERVER] Ainda não finalizado ou não achou. Retornando done=false...');
       return res.json({ done: false });
     }
 
-    // Caso done=true, precisamos extrair .manchetes_do_dia e .artigos_finalistas
-    // Observando que data.raw pode ter message.content como string
+    // Se achou e done=true
     const raw = data.raw || {};
-    let content = raw?.message?.content;
+    console.log('[SERVER] Row do DB (done=true). raw:', JSON.stringify(raw, null, 2));
 
-    // Se for string, tentamos parsear
+    // Tenta parsear raw.message.content se for string
+    let content = raw?.message?.content;
     if (typeof content === 'string') {
       try {
         content = JSON.parse(content);
@@ -143,11 +130,11 @@ app.get('/api/status-n8n', async (req, res) => {
       }
     }
 
-    // Extraímos arrays
+    // Extrai arrays
     const headlines = content?.manchetes_do_dia || [];
     const artigos = content?.artigos_finalistas || [];
 
-    console.log('[SERVER] Achou row done=true, retornando manchetes/artigos...');
+    console.log('[SERVER] Retornando headlines/artigos ao front:', headlines, artigos);
     return res.json({
       done: true,
       headlines,
@@ -161,7 +148,7 @@ app.get('/api/status-n8n', async (req, res) => {
 });
 
 /**
- * 6) Inicia o servidor
+ * 6) Subida do servidor
  */
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}...`);
