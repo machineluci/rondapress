@@ -10,14 +10,6 @@
     href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-
-  <style>
-    /* Estilos específicos da demo */
-    .headlines-title { margin-top: 1.5rem; font-size: 1.2rem; font-weight: 600; }
-    .headlines-list { list-style: disc; padding-left: 1.5rem; margin-bottom: 1.5rem; }
-    .articles-title { margin-top: 1.5rem; font-size: 1.2rem; font-weight: 600; }
-    .article-container { border: 1px solid #ddd; padding: 0.8rem; margin-bottom: 1rem; }
-  </style>
 </head>
 <body>
 
@@ -32,11 +24,14 @@
         Clique para gerar sugestões de manchetes...
       </p>
 
-      <button id="btnGerar" class="btn-dark" style="margin-bottom:1.5rem;">
-        Gerar Manchetes
-      </button>
+      <!-- Container que garante 100% de largura + centralização do botão -->
+      <div class="button-container">
+        <button id="btnGerar" class="btn-dark">
+          Gerar Manchetes
+        </button>
+      </div>
 
-      <div id="resultado" style="font-size:0.95rem;"></div>
+      <div id="resultado" class="result-area"></div>
     </div>
   </section>
 
@@ -49,44 +44,31 @@
     const resultado = document.getElementById('resultado');
 
     btnGerar.addEventListener('click', async () => {
-      // Mensagem inicial ao usuário
       resultado.textContent = 
         'Coletando notícias relevantes e realizando análise com IA. Por favor aguarde...';
 
       try {
         // 1) Dispara o fluxo no n8n
-        console.log('[FRONT] Fazendo GET /api/start-n8n');
         const startRes = await fetch('/api/start-n8n');
         if (!startRes.ok) {
           throw new Error('Falha ao iniciar processamento no servidor.');
         }
 
-        // 2) Lê a resposta do n8n, que pode ser um objeto ou array [ { ... } ]
+        // 2) Lê a resposta do n8n
         let startData = await startRes.json();
-        console.log('[FRONT] Resposta bruta de /api/start-n8n:', startData);
-
-        // Se vier array, extrai o primeiro elemento
         if (Array.isArray(startData)) {
           startData = startData[0];
-          console.log('[FRONT] startData[0]:', startData);
         }
 
-        // Extrai o jobId (e remove '=' no início, se houver)
         let jobId = startData?.jobId || '';
-        console.log('[FRONT] jobId antes de remover "=":', jobId);
-
-        // Remove todos '=' do início da string
-        jobId = jobId.replace(/^=+/, '');
-        console.log('[FRONT] jobId depois de remover "=":', jobId);
-
+        jobId = jobId.replace(/^=+/, ''); // remove '=' no início
         if (!jobId) {
           throw new Error('Não foi possível obter jobId do servidor.');
         }
 
-        // 3) Polling: checa status a cada 5s, até 15 min
-        console.log('[FRONT] Iniciando polling com jobId:', jobId);
+        // 3) Polling a cada 5s, até 15 min
         const POLL_INTERVAL = 5000; 
-        const TIMEOUT = 15 * 60 * 1000; // 15 minutos
+        const TIMEOUT = 15 * 60 * 1000; 
         let elapsed = 0;
 
         const intervalId = setInterval(async () => {
@@ -98,31 +80,22 @@
           }
 
           try {
-            const urlStatus = `/api/status-n8n?jobId=${jobId}`;
-            console.log('[FRONT] Polling GET:', urlStatus);
-            const statusRes = await fetch(urlStatus);
+            const statusRes = await fetch(`/api/status-n8n?jobId=${jobId}`);
             if (!statusRes.ok) {
               throw new Error('Erro ao checar status no servidor.');
             }
             const data = await statusRes.json();
-            console.log('[FRONT] Resposta do /api/status-n8n:', data);
 
             if (data.done === false) {
-              // Ainda em processamento
-              resultado.textContent = 
-                'Análise em andamento... (Isso pode levar alguns minutos.)';
+              resultado.textContent = 'Análise em andamento... aguarde.';
             } else if (data.done === true) {
               clearInterval(intervalId);
               exibirResultados(data);
-            } else {
-              console.log('Resposta parcial/desconhecida:', data);
             }
-
           } catch (pollErr) {
             clearInterval(intervalId);
             resultado.textContent = `Erro no polling: ${pollErr.message}`;
           }
-
         }, POLL_INTERVAL);
 
       } catch (err) {
@@ -131,19 +104,23 @@
       }
     });
 
-    // Exibe Manchetes e Artigos
     function exibirResultados(data) {
       const { headlines, artigos } = data;
       let html = '';
 
+      // Manchetes
       if (Array.isArray(headlines) && headlines.length) {
-        html += `<h3 class="headlines-title">Sugestões de Manchetes</h3><ul class="headlines-list">`;
+        html += `<h3 class="headlines-title">Sugestões de Manchetes</h3>`;
+        html += `<ul class="headlines-list">`;
         headlines.forEach(m => {
+          // Remove bullets no início (se GPT mandar "•")
+          m = m.replace(/^(\s*[•●\-*]+)\s*/, '');
           html += `<li>${m}</li>`;
         });
         html += '</ul>';
       }
 
+      // Artigos
       if (Array.isArray(artigos) && artigos.length) {
         html += `<h3 class="articles-title">Últimas Notícias</h3>`;
         artigos.forEach(a => {
